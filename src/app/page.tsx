@@ -74,11 +74,9 @@ export default function Home() {
         `);
         
         // Extract unique category titles and add "Featured" at the beginning
-        const uniqueCategories = [
-          "Featured", 
-          ...new Set(categoriesData.map((cat: Category) => cat.title))
-        ];
-        
+        const categoryTitles: string[] = categoriesData.map((cat: Category) => cat.title);
+        const uniqueCategories: string[] = ["Featured", ...new Set(categoryTitles)];
+
         setCategories(uniqueCategories);
       } catch (error) {
         console.error("Error fetching data from Sanity:", error);
