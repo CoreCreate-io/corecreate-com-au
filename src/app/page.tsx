@@ -10,6 +10,7 @@ import Image from "next/image";
 import { client } from "@/lib/sanity.client";
 import { urlForImage } from "@/lib/image";
 import { Container } from "@/components/layout/container";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
 
 // Types based on your Sanity schema
 interface Project {
@@ -37,6 +38,21 @@ interface Category {
   categoryType: string;
 }
 
+// Component for project skeleton during loading
+const ProjectSkeleton = () => (
+  <div className="group relative overflow-hidden rounded-lg">
+    <Skeleton className="h-80 w-full" />
+    <div className="mt-3">
+      <Skeleton className="h-4 w-24 mb-2" />
+      <Skeleton className="h-6 w-full max-w-[250px]" />
+      <div className="mt-2 flex gap-2">
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-6 w-20" />
+      </div>
+    </div>
+  </div>
+);
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Featured");
@@ -63,8 +79,7 @@ export default function Home() {
             featured
           }
         `);
-        setProjects(projectsData);
-
+        
         // Fetch unique field and sector categories
         const categoriesData = await client.fetch(`
           *[_type == "category"] | order(order asc) {
@@ -77,6 +92,8 @@ export default function Home() {
         const categoryTitles: string[] = categoriesData.map((cat: Category) => cat.title);
         const uniqueCategories: string[] = ["Featured", ...new Set(categoryTitles)];
 
+        // Set state after both requests complete
+        setProjects(projectsData);
         setCategories(uniqueCategories);
       } catch (error) {
         console.error("Error fetching data from Sanity:", error);
@@ -104,9 +121,12 @@ export default function Home() {
     return matchesSearch && matchesCategory;
   });
 
+  // Create an array of skeleton placeholders for loading state
+  const skeletons = Array.from({ length: 4 }).map((_, i) => <ProjectSkeleton key={`skeleton-${i}`} />);
+
   return (
     <main className="min-h-screen pb-16">
-      {/* Hero Section - Full width background with constrained content */}
+      {/* Hero Section */}
       <section className="py-16 md:py-24">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
@@ -144,25 +164,32 @@ export default function Home() {
         
         {/* Category Filters */}
         <div className="flex gap-2 flex-wrap mt-4">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant={activeCategory === category ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveCategory(category)}
-              className="rounded-full"
-            >
-              {category}
-            </Button>
-          ))}
+          {loading ? (
+            // Skeleton for category filters
+            Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={`cat-skeleton-${i}`} className="h-8 w-20 rounded-full" />
+            ))
+          ) : (
+            categories.map((category) => (
+              <Button
+                key={category}
+                variant={activeCategory === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveCategory(category)}
+                className="rounded-full"
+              >
+                {category}
+              </Button>
+            ))
+          )}
         </div>
       </Container>
 
       {/* Projects Grid */}
       <Container>
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {skeletons}
           </div>
         ) : (
           <>
@@ -192,6 +219,7 @@ export default function Home() {
                             src={urlForImage(project.featuredImage).url()}
                             alt={project.title}
                             fill
+                            priority={false}
                             className="object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                         ) : (
