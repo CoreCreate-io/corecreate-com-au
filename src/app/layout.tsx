@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${manrope.variable} ${sora.variable} ${geistMono.variable} antialiased`}>
-          {children}
+        {children}
       </body>
     </html>
   );

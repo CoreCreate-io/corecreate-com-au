@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { client } from "@/lib/sanity.client";
 import { urlForImage } from "@/lib/image";
+import { Container } from "@/components/layout/container";
 
 // Types based on your Sanity schema
 interface Project {
@@ -22,6 +23,7 @@ interface Project {
   clientInfo?: { 
     clientName?: string;
   };
+  featured?: boolean;
 }
 
 export default function Home() {
@@ -46,7 +48,8 @@ export default function Home() {
             featuredImage,
             projectField->{title},
             projectSector->{title},
-            clientInfo
+            clientInfo,
+            featured
           }
         `);
         setProjects(projectsData);
@@ -81,32 +84,37 @@ export default function Home() {
                          (project.clientInfo?.clientName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (project.description || "").toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCategory = activeCategory === "Featured" || 
-                           project.projectField?.title === activeCategory || 
-                           project.projectSector?.title === activeCategory;
+    // Update to use featured field for the Featured category
+    const matchesCategory = 
+      activeCategory === "Featured" 
+        ? project.featured === true
+        : project.projectField?.title === activeCategory || 
+          project.projectSector?.title === activeCategory;
     
     return matchesSearch && matchesCategory;
   });
 
   return (
     <main className="min-h-screen pb-16">
-      {/* Hero Section */}
+      {/* Hero Section - Full width background with constrained content */}
       <section className="py-16 md:py-24">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-semibold leading-tight">
-            From <span className="text-primary">concept to creation</span>, we handle every stage of your 
-            digital presence. Whether you need a standout <span className="text-primary">brand</span>, a 
-            <span className="text-primary"> high-converting website</span>, or 
-            <span className="text-primary"> compelling video content</span>.
-          </h1>
-          <p className="mt-6 text-xl text-muted-foreground">
-            We bring it all together <span className="font-medium text-foreground">under one creative roof</span>.
-          </p>
-        </div>
+        <Container>
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-semibold leading-tight">
+              From <span className="text-primary">concept to creation</span>, we handle every stage of your 
+              digital presence. Whether you need a standout <span className="text-primary">brand</span>, a 
+              <span className="text-primary"> high-converting website</span>, or 
+              <span className="text-primary"> compelling video content</span>.
+            </h1>
+            <p className="mt-6 text-xl text-muted-foreground">
+              We bring it all together <span className="font-medium text-foreground">under one creative roof</span>.
+            </p>
+          </div>
+        </Container>
       </section>
 
       {/* Search and Filter Section */}
-      <section className="mb-10">
+      <Container className="mb-10">
         <div className="relative">
           <Input
             placeholder="Search our work..."
@@ -138,10 +146,10 @@ export default function Home() {
             </Button>
           ))}
         </div>
-      </section>
+      </Container>
 
       {/* Projects Grid */}
-      <section>
+      <Container>
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -231,7 +239,7 @@ export default function Home() {
             </Link>
           </Button>
         </div>
-      </section>
+      </Container>
     </main>
   );
 }
