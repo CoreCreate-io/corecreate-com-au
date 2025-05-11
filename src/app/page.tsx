@@ -1,103 +1,237 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Filter, Search } from "lucide-react";
+import Link from "next/link";
 import Image from "next/image";
+import { client } from "@/lib/sanity.client";
+import { urlForImage } from "@/lib/image";
+
+// Types based on your Sanity schema
+interface Project {
+  _id: string;
+  title: string;
+  slug: { current: string };
+  description?: string;
+  featuredImage: any; // Sanity image
+  projectField: { title: string };
+  projectSector: { title: string };
+  clientInfo?: { 
+    clientName?: string;
+  };
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Featured");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [categories, setCategories] = useState<string[]>(["Featured"]);
+  const [loading, setLoading] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Fetch projects and categories from Sanity
+  useEffect(() => {
+    async function fetchProjects() {
+      setLoading(true);
+      try {
+        // Fetch projects with their fields and sectors
+        const projectsData = await client.fetch(`
+          *[_type == "project"] | order(publishedAt desc) {
+            _id,
+            title,
+            slug,
+            description,
+            featuredImage,
+            projectField->{title},
+            projectSector->{title},
+            clientInfo
+          }
+        `);
+        setProjects(projectsData);
+
+        // Fetch unique field and sector categories
+        const categoriesData = await client.fetch(`
+          *[_type == "category"] | order(order asc) {
+            title,
+            categoryType
+          }
+        `);
+        
+        // Extract unique category titles and add "Featured" at the beginning
+        const uniqueCategories = ["Featured", 
+          ...new Set(categoriesData.map((cat: any) => cat.title))
+        ];
+        
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error("Error fetching data from Sanity:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProjects();
+  }, []);
+
+  // Filter projects based on search query and active category
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (project.clientInfo?.clientName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (project.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = activeCategory === "Featured" || 
+                           project.projectField?.title === activeCategory || 
+                           project.projectSector?.title === activeCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  return (
+    <main className="min-h-screen pb-16">
+      {/* Hero Section */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-semibold leading-tight">
+            From <span className="text-primary">concept to creation</span>, we handle every stage of your 
+            digital presence. Whether you need a standout <span className="text-primary">brand</span>, a 
+            <span className="text-primary"> high-converting website</span>, or 
+            <span className="text-primary"> compelling video content</span>.
+          </h1>
+          <p className="mt-6 text-xl text-muted-foreground">
+            We bring it all together <span className="font-medium text-foreground">under one creative roof</span>.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </section>
+
+      {/* Search and Filter Section */}
+      <section className="mb-10">
+        <div className="relative">
+          <Input
+            placeholder="Search our work..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-16 rounded-full"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <div className="absolute right-1 top-1 flex gap-1">
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Filter className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Category Filters */}
+        <div className="flex gap-2 flex-wrap mt-4">
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={activeCategory === category ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveCategory(category)}
+              className="rounded-full"
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
+      </section>
+
+      {/* Projects Grid */}
+      <section>
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            {filteredProjects.length === 0 ? (
+              <div className="text-center py-20">
+                <h3 className="text-xl">No projects found matching your search</h3>
+                <Button 
+                  variant="outline" 
+                  className="mt-4 rounded-full"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setActiveCategory('Featured');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {filteredProjects.map((project) => (
+                  <Link href={`/projects/${project.slug.current}`} key={project._id}>
+                    <div className="group relative overflow-hidden rounded-lg">
+                      {/* Project Image */}
+                      <div className="h-80 relative">
+                        {project.featuredImage ? (
+                          <Image
+                            src={urlForImage(project.featuredImage).url()}
+                            alt={project.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <p className="text-muted-foreground">No image</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Project Info */}
+                      <div className="mt-3">
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                          {project.clientInfo?.clientName || ''}
+                        </div>
+                        <h3 className="text-xl font-heading font-medium mt-1">{project.title}</h3>
+                        
+                        {/* Tags */}
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {project.projectField && (
+                            <Badge variant="outline" className="bg-background/80">{project.projectField.title}</Badge>
+                          )}
+                          {project.projectSector && (
+                            <Badge variant="outline" className="bg-background/80">{project.projectSector.title}</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+        
+        {/* View All Projects Button */}
+        <div className="mt-16 flex justify-center">
+          <Button className="rounded-full" size="lg" variant="outline" asChild>
+            <Link href="/projects">
+              View All Work
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="ml-2 h-4 w-4"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </Link>
+          </Button>
+        </div>
+      </section>
+    </main>
   );
 }
