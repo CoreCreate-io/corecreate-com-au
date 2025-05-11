@@ -17,13 +17,24 @@ interface Project {
   title: string;
   slug: { current: string };
   description?: string;
-  featuredImage: any; // Sanity image
+  featuredImage: {
+    _type: string;
+    asset: {
+      _ref: string;
+      _type: string;
+    };
+  };
   projectField: { title: string };
   projectSector: { title: string };
   clientInfo?: { 
     clientName?: string;
   };
   featured?: boolean;
+}
+
+interface Category {
+  title: string;
+  categoryType: string;
 }
 
 export default function Home() {
@@ -63,8 +74,9 @@ export default function Home() {
         `);
         
         // Extract unique category titles and add "Featured" at the beginning
-        const uniqueCategories = ["Featured", 
-          ...new Set(categoriesData.map((cat: any) => cat.title))
+        const uniqueCategories = [
+          "Featured", 
+          ...new Set(categoriesData.map((cat: Category) => cat.title))
         ];
         
         setCategories(uniqueCategories);
