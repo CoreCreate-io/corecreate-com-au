@@ -1,5 +1,21 @@
 import { defineField, defineType } from 'sanity';
 
+// Define the possible category types as a union type
+type CategoryType = 'field' | 'sector';
+
+// Define an interface for the labels
+interface CategoryTypeLabels {
+  field: string;
+  sector: string;
+  [key: string]: string; // This allows any string key to be used
+}
+
+// Create a properly typed object for the labels
+const categoryTypeLabels: CategoryTypeLabels = {
+  field: 'Service Field',
+  sector: 'Service Sector',
+}
+
 export default defineType({
   name: 'category',
   title: 'Category',
@@ -49,8 +65,8 @@ export default defineType({
       type: 'string',
       options: {
         list: [
-          { title: 'Field', value: 'field' }, // Photography, Videography, etc.
-          { title: 'Sector', value: 'sector' }, // Real Estate, Construction, etc.
+          { title: 'Service Field', value: 'field' }, // Photography, Videography, etc.
+          { title: 'Service Sector', value: 'sector' }, // Real Estate, Construction, etc.
         ],
         layout: 'radio',
       },
@@ -81,14 +97,9 @@ export default defineType({
       media: 'icon',
     },
     prepare({ title, categoryType, media }) {
-      const categoryTypeLabels = {
-        field: 'Field',
-        sector: 'Sector',
-      };
-      
       return {
         title,
-        subtitle: categoryType ? categoryTypeLabels[categoryType] : '',
+        subtitle: categoryType ? categoryTypeLabels[categoryType as CategoryType] : '',
         media,
       };
     },
