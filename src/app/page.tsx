@@ -39,7 +39,7 @@ async function getCategories() {
       title
     }
   `);
-  return ["Featured", ...categories.map((cat: any) => cat.title)];
+  return ["Featured", ...categories.map((cat: { title: string }) => cat.title)];
 }
 
 export default async function ProjectsPage() {

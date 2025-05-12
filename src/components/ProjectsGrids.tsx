@@ -350,8 +350,6 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
       )}
 
       
-      // Updated Progress bars section - modify this in your return statement
-      
       {/* Progress bars with improved click handlers and styling */}
       <div className="absolute bottom-0 left-0 right-0 z-10 flex gap-1 p-2">
         {projectImages.map((_, idx) => (
