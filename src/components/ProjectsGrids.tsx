@@ -800,8 +800,6 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                   </div>
                 )}
                 
-                // Update the Image Gallery section around line 820
-                
                 {/* Image Gallery - Skip first image if it's the same as featured image */}
                 {projectImages.length > 1 && (
                   <div className="mb-8">
