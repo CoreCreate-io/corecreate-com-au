@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Sora, Geist_Mono } from "next/font/google";
+import '../styles/component-overrides.css'; // Add this import
 import "./globals.css";
 
 const manrope = Manrope({

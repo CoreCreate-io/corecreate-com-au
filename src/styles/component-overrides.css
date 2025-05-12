@@ -1,0 +1,142 @@
+/* ===== DRAWER OVERRIDES ===== */
+
+/* Ensure drawer content takes full height */
+[data-vaul-drawer-content] {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  transform: none !important;
+  transition: height 0.3s ease, max-height 0.3s ease !important;
+}
+
+/* Override the 80vh limit specifically */
+[data-vaul-drawer-direction="bottom"] {
+  max-height: 100vh !important;
+  height: 100vh !important;
+}
+
+/* Ensure the drawer content can expand fully */
+[data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+  max-height: 100vh !important;
+  height: 100vh !important;
+  transform: none !important;
+}
+
+/* Ensure the scroll container works properly */
+.drawer-container-override {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch; /* For better iOS scrolling */
+}
+
+/* Disable default vaul drawer height constraints */
+.drawer-override [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+  max-height: none !important; /* Override the 80vh limit */
+}
+
+/* Desktop vs Mobile Behavior */
+@media (max-width: 767px) {
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+    transition: height 0.3s ease, max-height 0.3s ease !important;
+    height: 80vh !important;
+    max-height: 80vh !important;
+  }
+  
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"].scrolled,
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"].fully-expanded {
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+}
+
+@media (min-width: 768px) {
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+}
+
+/* ===== LIGHTBOX OVERRIDES ===== */
+
+.lightbox-override {
+  position: fixed !important;
+  inset: 0 !important;
+  transform: none !important;
+}
+
+.lightbox-content-override {
+  transform: none !important;
+  translate: none !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Target all transforms inside the lightbox */
+.lightbox-override *,
+.lightbox-content-override * {
+  transform: none !important;
+  translate: none !important;
+}
+
+/* But allow transforms for specific elements */
+.lightbox-content-override .image-transform {
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Super-specific production overrides for lightbox */
+[role="dialog"] .lightbox-content-override,
+[data-state="open"] .lightbox-content-override,
+div[role="dialog"] .lightbox-content-override,
+div.lightbox-content-override {
+  transform: none !important;
+  translate: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+}
+
+/* Target specific transform classes that might be applied in production build */
+.translate-x-\[0\%\],
+.translate-y-\[0\%\],
+.translate-x-\[-50\%\],
+.translate-y-\[-50\%\],
+.-translate-x-\[50\%\],
+.-translate-y-\[50\%\] {
+  transform: none !important;
+  translate: none !important;
+}
+
+/* Directly target the dialog */
+[data-state="open"].fixed {
+  position: fixed !important;
+  inset: 0 !important;
+}
+
+/* Handle the case where lightbox is inside a drawer */
+.drawer-override .lightbox-content-override,
+.h-screen .lightbox-content-override {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+/* ===== VIEWPORT UTILITIES ===== */
+
+.h-screen, 
+.max-h-screen,
+.h-[100vh],
+.max-h-[100vh] {
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
