@@ -389,7 +389,7 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
         alt={project.title}
         fill
         priority={true}
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
+        className="object-cover transition-transform duration-300"
         draggable={false}
       />
     </div>
@@ -677,7 +677,7 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                     }}
                   >
                     {/* Project Image or Video */}
-                    <div className="h-80 relative">
+                    <div className="h-80 md:h-110 relative">
                       {project.featuredVideoEnabled && project.featuredVideo?.asset?.url ? (
                         <video
                           src={project.featuredVideo.asset.url}
