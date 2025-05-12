@@ -88,7 +88,7 @@ const ProjectSkeleton = () => (
 // Add this new component at the top of your file, before the ProjectsGrid component
 
 const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
-  // Keep existing image collection code
+  // Collect images first
   const projectImages = React.useMemo(() => {
     const images = [];
     if (project.featuredImage) {
@@ -100,7 +100,162 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     return images;
   }, [project]);
 
-  // Only create carousel if there are multiple images
+  // MOVE ALL HOOKS BEFORE ANY CONDITIONAL RETURNS
+  // State hooks
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [showControls, setShowControls] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isHorizontalSwiping, setIsHorizontalSwiping] = useState(false);
+  const interval = 5000;
+  
+  // Ref hooks
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const slideTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const savedScrollPosition = useRef(0);
+  const isMobile = useRef(false);
+  const touchMoved = useRef(false);
+  
+  
+// First, define clearTimers without any dependencies
+  const clearTimers = useCallback(() => {
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+    if (slideTimerRef.current) {
+      clearTimeout(slideTimerRef.current);
+      slideTimerRef.current = null;
+    }
+  }, []);
+    
+  // Define a startProgress function that doesn't reference nextSlide
+  const startProgress = useCallback(() => {
+    clearTimers();
+    const progressInterval = 50;
+    const progressIncrement = (progressInterval / interval) * 100;
+    
+    progressTimerRef.current = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + progressIncrement;
+        if (next >= 100) {
+          if (!slideTimerRef.current) {
+            // Store the current index in a variable to avoid capturing it in a closure
+            const currentIdx = currentIndex;
+            slideTimerRef.current = setTimeout(() => {
+              // Move to next slide using the formula directly
+              const newIndex = (currentIdx + 1) % projectImages.length;
+              setCurrentIndex(newIndex);
+              setProgress(0);
+              startProgress(); // Restart progress for the new slide
+              slideTimerRef.current = null;
+            }, 50);
+          }
+          return 100;
+        }
+        return next;
+      });
+    }, progressInterval);
+  }, [clearTimers, interval, currentIndex, projectImages.length]);
+    
+  // Define updateSlide without referencing nextSlide
+  const updateSlide = useCallback((newIndex: number) => {
+    clearTimers();
+    setCurrentIndex(newIndex);
+    setProgress(0);
+    startProgress(); // Start progress for the new slide
+  }, [clearTimers, startProgress]);
+    
+  // Define nextSlide and prevSlide
+  const nextSlide = useCallback(() => {
+    const newIndex = (currentIndex + 1) % projectImages.length;
+    updateSlide(newIndex);
+  }, [currentIndex, projectImages.length, updateSlide]);
+    
+  const prevSlide = useCallback(() => {
+    const newIndex = (currentIndex - 1 + projectImages.length) % projectImages.length;
+    updateSlide(newIndex);
+  }, [currentIndex, projectImages.length, updateSlide]);
+
+  // Effect hooks
+  useEffect(() => {
+    clearTimers();
+    
+    // Don't start timers if paused or only one image
+    if (isPaused || projectImages.length <= 1) return;
+    
+    const progressInterval = 50; // Update every 50ms
+    const progressIncrement = (progressInterval / interval) * 100;
+    
+    progressTimerRef.current = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + progressIncrement;
+        if (next >= 100) {
+          if (!slideTimerRef.current) {
+            slideTimerRef.current = setTimeout(() => {
+              nextSlide();
+              slideTimerRef.current = null;
+            }, 50);
+          }
+          return 100;
+        }
+        return next;
+      });
+    }, progressInterval);
+    
+    return clearTimers;
+  }, [clearTimers, isPaused, interval, nextSlide, projectImages.length]);
+
+  // Mobile detection
+  useEffect(() => {
+    isMobile.current = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }, []);
+
+  // Touch handlers with proper implementation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].pageY;
+    savedScrollPosition.current = window.scrollY;
+    touchMoved.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartX.current || !touchStartY.current) return;
+    
+    const touchEndX = e.touches[0].clientX;
+    const touchEndY = e.touches[0].pageY;
+    const diffX = touchStartX.current - touchEndX;
+    const diffY = touchStartY.current - touchEndY;
+    
+    if (Math.abs(diffX) > Math.abs(diffY) * 1.1) {
+      e.preventDefault();
+      touchMoved.current = true;
+      
+      if (!isHorizontalSwiping) {
+        setIsHorizontalSwiping(true);
+      }
+      
+      if (Math.abs(diffX) > 50) {
+        if (diffX > 0) {
+          nextSlide();
+        } else {
+          prevSlide();
+        }
+        touchStartX.current = null;
+        touchStartY.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => { 
+    touchStartX.current = null;
+    touchStartY.current = null;
+    setIsHorizontalSwiping(false);
+  };
+
+  // NOW you can do the conditional return - after all hooks
   if (projectImages.length <= 1) {
     return (
       <Image
@@ -113,193 +268,61 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     );
   }
 
-  // State for current slide index and timer progress
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [showControls, setShowControls] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const interval = 5000; // 5 seconds per slide
-  
-  // Separate timers to avoid conflicts
-  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const slideTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Touch/swipe handlers for mobile only
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const touchMoved = useRef(false);
-  
-  // Clear all timers - utility function
-  const clearTimers = useCallback(() => {
-    if (progressTimerRef.current) {
-      clearInterval(progressTimerRef.current);
-      progressTimerRef.current = null;
-    }
-    if (slideTimerRef.current) {
-      clearTimeout(slideTimerRef.current);
-      slideTimerRef.current = null;
-    }
-  }, []);
-  
-  // Update slide without timer interactions
-  const updateSlide = useCallback((newIndex: number) => {
-    setCurrentIndex(newIndex);
-    setProgress(100); // Fill the bar for manual navigation
-  }, []);
-  
-  // Navigation functions with timer cleanup
-  const nextSlide = useCallback(() => {
-    clearTimers();
-    const newIndex = (currentIndex + 1) % projectImages.length;
-    updateSlide(newIndex);
-  }, [clearTimers, currentIndex, projectImages.length, updateSlide]);
-  
-  const prevSlide = useCallback(() => {
-    clearTimers();
-    const newIndex = (currentIndex - 1 + projectImages.length) % projectImages.length;
-    updateSlide(newIndex);
-  }, [clearTimers, currentIndex, projectImages.length, updateSlide]);
-
-
-  // Setup the auto-advance timer - but keep it separate from navigation
-  useEffect(() => {
-    // First clear any existing timers
-    clearTimers();
-    
-    // Don't start new timers if paused
-    if (isPaused) return;
-    
-    // Progress update function - smooth animation
-    const updateProgress = () => {
-      const progressInterval = 50; // Update every 50ms
-      const progressIncrement = (progressInterval / interval) * 100;
-      
-      progressTimerRef.current = setInterval(() => {
-        setProgress(prev => {
-          const next = prev + progressIncrement;
-          if (next >= 100) {
-            // If we reach 100%, schedule the next slide
-            if (!slideTimerRef.current) {
-              slideTimerRef.current = setTimeout(() => {
-                setCurrentIndex(prevIndex => (prevIndex + 1) % projectImages.length);
-                setProgress(0);
-                slideTimerRef.current = null;
-              }, 50); // Small delay to ensure progress bar is seen as full
-            }
-            return 100;
-          }
-          return next;
-        });
-      }, progressInterval);
-    };
-    
-    // Reset progress when slide changes and start the new timer
-    if (!isPaused) {
-      setProgress(0);
-      updateProgress();
-    }
-    
-    // Clean up on unmount
-    return clearTimers;
-  }, [clearTimers, isPaused, interval, currentIndex, projectImages.length]);
-
-  // Add state to track horizontal swipe
-  const [isHorizontalSwiping, setIsHorizontalSwiping] = useState(false);
-  
-  // Improved touch handlers for mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].pageY;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStartX.current || !touchStartY.current) return;
-    
-    const touchEndX = e.touches[0].clientX;
-    const touchEndY = e.touches[0].pageY;
-    const diffX = touchStartX.current - touchEndX;
-    const diffY = touchStartY.current - touchEndY;
-    
-    // More aggressive horizontal swipe detection - lower threshold and stronger directional bias
-    if (!isHorizontalSwiping && Math.abs(diffX) > Math.abs(diffY) * 1.2 && Math.abs(diffX) > 5) {
-      setIsHorizontalSwiping(true);
-      
-      // Apply body scroll lock when horizontal swipe is detected
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
-    }
-    
-    // If we're in a horizontal swipe, always prevent default behavior
-    if (isHorizontalSwiping) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Only trigger navigation after a significant movement (50px)
-      if (Math.abs(diffX) > 50) {
-        if (diffX > 0) {
-          nextSlide();
-        } else {
-          prevSlide();
+  // Complete component rendering
+  return (
+    <div 
+      className="w-full h-full relative select-none"
+      onContextMenu={(e) => e.preventDefault()}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseEnter={() => {
+        if (!isMobile.current) {
+          setIsPaused(true);
+          setShowControls(true);
         }
-        // Reset touch tracking after navigation
-        touchStartX.current = null;
-        touchStartY.current = null;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => { 
-    touchStartX.current = null;
-    touchStartY.current = null;
-    
-    if (isHorizontalSwiping) {
-      // Restore scroll behavior when touch ends
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    }
-    
-    setIsHorizontalSwiping(false);
-  };
-
-  // Add a check for mobile devices
-  const isMobile = useRef(false);
-  
-  // Check if mobile on component mount
-  useEffect(() => {
-    // Simple mobile detection
-    isMobile.current = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  }, []);
-
-  // Return your component with updated event handlers and CSS
-return (
-  <div 
-    className="w-full h-full relative select-none touch-none"
-    style={{ 
-      WebkitTouchCallout: 'none', /* iOS Safari */
-      WebkitUserSelect: 'none',    /* Safari */
-      userSelect: 'none',          /* Standard */
-      touchAction: isHorizontalSwiping ? 'pan-y' : 'auto'
-    }}
-    onContextMenu={(e) => e.preventDefault()} /* Prevent long-press context menu */
-    onTouchStart={handleTouchStart}
-    onTouchMove={handleTouchMove}
-    onTouchEnd={handleTouchEnd}
-    onMouseEnter={() => {
-      // Only enable hover behavior on non-mobile devices
-      if (!isMobile.current) {
-        setIsPaused(true);
-        setShowControls(true);
-      }
-    }}
-    onMouseLeave={() => {
-      // Only enable hover behavior on non-mobile devices
-      if (!isMobile.current) {
-        setIsPaused(false);
-        setShowControls(false);
-      }
-    }}
-  >
-      {/* Arrow controls for desktop - only show on hover AND only on non-mobile */}
+      }}
+      onMouseLeave={() => {
+        if (!isMobile.current) {
+          setIsPaused(false);
+          setShowControls(false);
+          // Reset progress for the current slide when mouse leaves
+          if (progressTimerRef.current) {
+            clearInterval(progressTimerRef.current);
+            progressTimerRef.current = null;
+            
+            // Reset progress to 0 before starting the timer again
+            setProgress(0);
+            
+            // Start a new timer with a slight delay
+            setTimeout(() => {
+              if (!isPaused) {
+                // This code should match your timer setup in useEffect
+                const progressInterval = 50;
+                const progressIncrement = (progressInterval / interval) * 100;
+                
+                progressTimerRef.current = setInterval(() => {
+                  setProgress(prev => {
+                    const next = prev + progressIncrement;
+                    if (next >= 100) {
+                      if (!slideTimerRef.current) {
+                        slideTimerRef.current = setTimeout(() => {
+                          nextSlide();
+                          slideTimerRef.current = null;
+                        }, 50);
+                      }
+                      return 100;
+                    }
+                    return next;
+                  });
+                }, progressInterval);
+              }
+            }, 100);
+          }
+        }
+      }}
+    >
+      {/* Arrow controls for desktop */}
       {showControls && !isMobile.current && projectImages.length > 1 && (
         <>
           <button 
@@ -326,14 +349,36 @@ return (
         </>
       )}
 
-      {/* Progress bars at the BOTTOM with new colors */}
+      
+      // Updated Progress bars section - modify this in your return statement
+      
+      {/* Progress bars with improved click handlers and styling */}
       <div className="absolute bottom-0 left-0 right-0 z-10 flex gap-1 p-2">
         {projectImages.map((_, idx) => (
-          <div key={idx} className="h-1 bg-black/40 rounded-full flex-1">
+          <div 
+            key={idx} 
+            className={`h-1 ${idx === currentIndex ? 'bg-black/40' : 'bg-black/20'} rounded-full flex-1 cursor-pointer overflow-hidden`}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent parent click handlers
+              setCurrentIndex(idx);
+              clearTimers();
+              
+              // Force progress to 1% initially so the bar is visible immediately
+              setProgress(1); 
+              
+              // Then start the timer
+              setTimeout(() => {
+                if (!isPaused) {
+                  startProgress();
+                }
+              }, 50);
+            }}
+          >
             {idx === currentIndex && (
               <div 
                 className="h-full bg-[#BAFF00] rounded-full transition-all duration-100" 
-                style={{ width: `${progress}%` }}
+                // Ensure at least 1px width is shown when progress is at 0
+                style={{ width: `${progress === 0 ? 100 : progress}%` }}
               />
             )}
           </div>
@@ -346,7 +391,7 @@ return (
         alt={project.title}
         fill
         priority={true}
-        className="object-cover transition-transform duration-300 group-hover:scale-105 carousel-image-container"
+        className="object-cover transition-transform duration-300 group-hover:scale-105"
         draggable={false}
       />
     </div>
