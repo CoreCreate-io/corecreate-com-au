@@ -173,177 +173,145 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
     if (e.key === 'Escape') setLightboxOpen(false);
   };
 
-  // Update the drawer scroll behavior useEffect
+  // Replace ALL existing drawer-related useEffect hooks with these two:
+
+  // 1. Safari URL bar detection and handling
   useEffect(() => {
-    // Get references to DOM elements
+    if (!selectedProject) return;
+  
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const drawerContent = document.querySelector('[data-vaul-drawer-content][data-vaul-drawer-direction="bottom"]');
+    
+    if (!drawerContent) return;
+    
+    // Function to update viewport height AND position based on visualViewport
+    const setViewportHeight = () => {
+      // Use visualViewport API for most accurate height/position on mobile
+      const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const offsetTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+      
+      document.documentElement.style.setProperty('--drawer-viewport-height', `${height}px`);
+      document.documentElement.style.setProperty('--drawer-offset-top', `${offsetTop}px`);
+      
+      // Apply the top offset directly to the drawer element
+      if (drawerContent instanceof HTMLElement && isIOS) {
+        drawerContent.style.maxHeight = `${height}px`;
+        drawerContent.style.bottom = `0px`;
+        drawerContent.style.top = `${offsetTop}px`;
+      }
+    };
+  
+    // Initial setting
+    setViewportHeight();
+  
+    // Add all relevant event listeners
+    const events = ['resize', 'orientationchange'];
+    events.forEach(event => window.addEventListener(event, setViewportHeight));
+    
+    // Safari-specific handling using visualViewport
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', setViewportHeight);
+      window.visualViewport.addEventListener('scroll', setViewportHeight);
+    }
+  
+    // Special handling for iOS scroll events
+    if (isIOS) {
+      window.addEventListener('scroll', setViewportHeight);
+    }
+  
+    return () => {
+      events.forEach(event => window.removeEventListener(event, setViewportHeight));
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', setViewportHeight);
+        window.visualViewport.removeEventListener('scroll', setViewportHeight);
+      }
+      if (isIOS) {
+        window.removeEventListener('scroll', setViewportHeight);
+      }
+    };
+  }, [selectedProject]);
+  
+  // 2. Drawer expansion on scroll
+  useEffect(() => {
+    if (!selectedProject) return;
+  
     const drawerContent = document.querySelector('[data-vaul-drawer-content][data-vaul-drawer-direction="bottom"]');
     const innerContent = document.querySelector('.drawer-container-override');
     
-    if (!drawerContent || !selectedProject) return;
+    if (!drawerContent || !innerContent) return;
     
-    // iOS Safari detection
-    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isMobile = window.innerWidth < 768;
     
-    // Set CSS variable for dynamic viewport height
-    const updateWindowHeight = () => {
-      const windowHeight = window.innerHeight;
-      document.documentElement.style.setProperty('--window-height', `${windowHeight}px`);
-      // Also set the vh unit for browsers that don't support var()
-      document.documentElement.style.setProperty('--vh', `${windowHeight * 0.01}px`);
+    // Function to update initial drawer height
+    const updateInitialHeight = () => {
+      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       
-      return windowHeight;
+      // Calculate initial height - 80% on mobile, 100% on desktop
+      const initialHeight = isMobile ? Math.round(vh * 0.8) : vh;
+      document.documentElement.style.setProperty('--drawer-initial-height', `${initialHeight}px`);
     };
     
-    // Initial height setup
-    let windowHeight = updateWindowHeight();
-    
-    // Function to measure and apply the correct height
-    const updateHeight = (expand = false) => {
-      // Get fresh viewport height
-      windowHeight = updateWindowHeight();
-      
-      // Different heights for mobile vs desktop
-      if (window.innerWidth < 768) {
-        // For mobile: start at 85% height, full height when expanded
-        const height = expand ? windowHeight : Math.floor(windowHeight * 0.85);
-        
-        // Force height directly on the element
-        (drawerContent as HTMLElement).style.height = `${height}px`;
-        (drawerContent as HTMLElement).style.maxHeight = `${height}px`;
-        
-        // Update class for CSS transitions
-        if (expand) {
-          drawerContent.classList.add('fully-expanded');
-        } else {
-          drawerContent.classList.remove('fully-expanded');
-        }
-      } else {
-        // For desktop: always full height
-        (drawerContent as HTMLElement).style.height = `${windowHeight}px`;
-        (drawerContent as HTMLElement).style.maxHeight = `${windowHeight}px`;
-      }
-    };
-    
-    // Set the initial height when the drawer opens
-    updateHeight(false);
-    
-    // Handle scroll events for expanding/contracting
+    // Handle scroll to expand drawer when scrolling
     const handleScroll = () => {
-      if (window.innerWidth >= 768 || !innerContent) return;
+      if (!isMobile) return;
       
       const scrollTop = (innerContent as HTMLElement).scrollTop;
       
-      // Expand when scrolled down, contract when scrolled back to top
-      if (scrollTop > 50 && !drawerContent.classList.contains('fully-expanded')) {
-        updateHeight(true);
-      } else if (scrollTop < 20 && drawerContent.classList.contains('fully-expanded')) {
-        updateHeight(false);
+      // Add/remove expanded class based on scroll position
+      if (scrollTop > 30 && !drawerContent.classList.contains('fully-expanded')) {
+        drawerContent.classList.add('fully-expanded');
+      } else if (scrollTop < 10 && drawerContent.classList.contains('fully-expanded')) {
+        drawerContent.classList.remove('fully-expanded');
       }
     };
     
-    // Create a highly responsive event system for Safari
-    let lastHeight = windowHeight;
-    let resizeTimeout: NodeJS.Timeout;
+    // Initial setup - make sure drawer starts at initial height
+    updateInitialHeight();
     
-    // For iOS Safari, adapt to URL bar changes
-    const handleVisualViewportResize = () => {
-      if (isIOS) {
-        updateWindowHeight();
-        
-        // Use requestAnimationFrame for smoother updates
-        window.requestAnimationFrame(() => {
-          updateHeight(drawerContent.classList.contains('fully-expanded'));
-        });
-      }
-    };
+    // Reset expanded state when drawer opens
+    if (drawerContent.classList.contains('fully-expanded')) {
+      drawerContent.classList.remove('fully-expanded');
+    }
     
-    // Handle general viewport changes (orientation, etc.)
+    // Window resize handler for updating initial height
     const handleResize = () => {
-      // Clear previous timeout to avoid rapid firing
-      clearTimeout(resizeTimeout);
-      
-      // Set a small delay to capture final size after UI elements settle
-      resizeTimeout = setTimeout(() => {
-        const newHeight = window.innerHeight;
-        
-        // Only update if height changed significantly
-        if (Math.abs(newHeight - lastHeight) > 50) {
-          lastHeight = newHeight;
-          updateHeight(drawerContent.classList.contains('fully-expanded'));
-        }
-      }, 50);
+      updateInitialHeight();
     };
     
-    // Attach more specific event listeners for iOS
-    if (isIOS && window.visualViewport) {
-      // Modern iOS provides visualViewport API
-      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
-      window.visualViewport.addEventListener('scroll', handleVisualViewportResize);
-    }
+    // Add event listeners
+    window.addEventListener('resize', handleResize);
+    innerContent.addEventListener('scroll', handleScroll, { passive: true });
     
-    // Attach standard event listeners
-    window.addEventListener('resize', handleResize, { passive: true });
-    window.addEventListener('orientationchange', () => {
-      // Orientation change needs a slightly longer delay
-      setTimeout(handleResize, 300);
-    });
-    window.addEventListener('scroll', handleVisualViewportResize, { passive: true });
-    
-    if (innerContent) {
-      innerContent.addEventListener('scroll', handleScroll, { passive: true });
-    }
-    
-    // Setup interval to catch edge cases
-    const checkInterval = setInterval(() => {
-      const newHeight = window.innerHeight;
-      if (Math.abs(newHeight - lastHeight) > 20) {
-        lastHeight = newHeight;
-        updateHeight(drawerContent.classList.contains('fully-expanded'));
-      }
-    }, 500);
-    
-    // Clean up all event listeners
     return () => {
-      if (isIOS && window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
-        window.visualViewport.removeEventListener('scroll', handleVisualViewportResize);
-      }
-      
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', () => setTimeout(handleResize, 300));
-      window.removeEventListener('scroll', handleVisualViewportResize);
-      
-      if (innerContent) {
-        innerContent.removeEventListener('scroll', handleScroll);
-      }
-      
-      clearInterval(checkInterval);
+      innerContent.removeEventListener('scroll', handleScroll);
     };
   }, [selectedProject]);
 
   useEffect(() => {
     if (!selectedProject) return;
 
-    const setDrawerHeight = () => {
-      const vh = window.visualViewport
-        ? window.visualViewport.height
-        : window.innerHeight;
-      document.documentElement.style.setProperty('--drawer-viewport-height', `${vh}px`);
+    const drawerContent = document.querySelector('[data-vaul-drawer-content][data-vaul-drawer-direction="bottom"]');
+    if (!drawerContent) return;
+
+    const setViewportHeight = () => {
+      const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const offsetTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+      document.documentElement.style.setProperty('--drawer-viewport-height', `${height}px`);
+      document.documentElement.style.setProperty('--drawer-offset-top', `${offsetTop}px`);
     };
 
-    setDrawerHeight();
+    setViewportHeight();
 
-    window.addEventListener('resize', setDrawerHeight);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', setDrawerHeight);
-      window.visualViewport.addEventListener('scroll', setDrawerHeight);
+      window.visualViewport.addEventListener('resize', setViewportHeight);
+      window.visualViewport.addEventListener('scroll', setViewportHeight);
     }
 
     return () => {
-      window.removeEventListener('resize', setDrawerHeight);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', setDrawerHeight);
-        window.visualViewport.removeEventListener('scroll', setDrawerHeight);
+        window.visualViewport.removeEventListener('resize', setViewportHeight);
+        window.visualViewport.removeEventListener('scroll', setViewportHeight);
       }
     };
   }, [selectedProject]);
@@ -474,11 +442,10 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
           }}
         >
           <DrawerContent className="drawer-override">
-            {/* Added max-width container for desktop */}
             <div className="mx-auto w-full max-w-[1440px] drawer-container-override">
               <div className="overflow-y-auto p-6 sm:p-10">
                 {/* Close Button */}
-                <DrawerClose className="absolute right-4 top-4 z-50">
+                <DrawerClose className="drawer-close-fix">
                   <Button variant="ghost" size="icon">
                     <X className="h-6 w-6" />
                     <span className="sr-only">Close</span>
