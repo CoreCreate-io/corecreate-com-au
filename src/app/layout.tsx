@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Manrope, Sora, Geist_Mono } from "next/font/google";
-import '../styles/component-overrides.css'; // Add this import
 import "./globals.css";
 
 const manrope = Manrope({
@@ -30,6 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </head>
       <body className={`${manrope.variable} ${sora.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>

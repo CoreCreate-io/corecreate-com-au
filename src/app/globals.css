@@ -87,6 +87,7 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  --drawer-viewport-height: 100vh;
 }
 
 .dark {
@@ -141,4 +142,56 @@
   .subtitle, .subheading {
     font-family: var(--font-manrope);
   }
+}
+
+/* ===== LIGHTBOX OVERRIDES ===== */
+
+.lightbox-override {
+  position: fixed !important;
+  inset: 0 !important;
+  transform: none !important;
+}
+
+.lightbox-content-override {
+  transform: none !important;
+  translate: none !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Target all transforms inside the lightbox */
+.lightbox-override *,
+.lightbox-content-override * {
+  transform: none !important;
+  translate: none !important;
+}
+
+/* But allow transforms for specific elements */
+.lightbox-content-override .image-transform {
+  transform: translate(-50%, -50%) !important;
+}
+
+/* ===== DRAWER OVERRIDES ===== */
+
+:root {
+  --drawer-viewport-height: 100vh;
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+}
+
+[data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+  height: var(--drawer-viewport-height) !important;
+  max-height: var(--drawer-viewport-height) !important;
+  margin-top: 0 !important;
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-top: var(--safe-area-inset-top);
+  transition: height 0.2s cubic-bezier(.4,0,.2,1);
+}
+
+.drawer-container-override {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }

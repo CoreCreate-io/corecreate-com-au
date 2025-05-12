@@ -184,10 +184,23 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
     // iOS Safari detection
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
     
+    // Set CSS variable for dynamic viewport height
+    const updateWindowHeight = () => {
+      const windowHeight = window.innerHeight;
+      document.documentElement.style.setProperty('--window-height', `${windowHeight}px`);
+      // Also set the vh unit for browsers that don't support var()
+      document.documentElement.style.setProperty('--vh', `${windowHeight * 0.01}px`);
+      
+      return windowHeight;
+    };
+    
+    // Initial height setup
+    let windowHeight = updateWindowHeight();
+    
     // Function to measure and apply the correct height
     const updateHeight = (expand = false) => {
-      // Get the actual viewport height (this will change when Safari UI shows/hides)
-      const windowHeight = window.innerHeight;
+      // Get fresh viewport height
+      windowHeight = updateWindowHeight();
       
       // Different heights for mobile vs desktop
       if (window.innerWidth < 768) {
@@ -228,38 +241,109 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
       }
     };
     
-    // For iOS Safari, handle window scroll events to detect address bar changes
-    const handleWindowScroll = () => {
+    // Create a highly responsive event system for Safari
+    let lastHeight = windowHeight;
+    let resizeTimeout: NodeJS.Timeout;
+    
+    // For iOS Safari, adapt to URL bar changes
+    const handleVisualViewportResize = () => {
       if (isIOS) {
-        // Small delay to let Safari UI settle
-        setTimeout(() => {
+        updateWindowHeight();
+        
+        // Use requestAnimationFrame for smoother updates
+        window.requestAnimationFrame(() => {
           updateHeight(drawerContent.classList.contains('fully-expanded'));
-        }, 100);
+        });
       }
     };
     
-    // Handle orientation changes and resize events
+    // Handle general viewport changes (orientation, etc.)
     const handleResize = () => {
-      updateHeight(drawerContent.classList.contains('fully-expanded'));
+      // Clear previous timeout to avoid rapid firing
+      clearTimeout(resizeTimeout);
+      
+      // Set a small delay to capture final size after UI elements settle
+      resizeTimeout = setTimeout(() => {
+        const newHeight = window.innerHeight;
+        
+        // Only update if height changed significantly
+        if (Math.abs(newHeight - lastHeight) > 50) {
+          lastHeight = newHeight;
+          updateHeight(drawerContent.classList.contains('fully-expanded'));
+        }
+      }, 50);
     };
     
-    // Attach event listeners
+    // Attach more specific event listeners for iOS
+    if (isIOS && window.visualViewport) {
+      // Modern iOS provides visualViewport API
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+      window.visualViewport.addEventListener('scroll', handleVisualViewportResize);
+    }
+    
+    // Attach standard event listeners
     window.addEventListener('resize', handleResize, { passive: true });
-    window.addEventListener('orientationchange', handleResize);
-    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    window.addEventListener('orientationchange', () => {
+      // Orientation change needs a slightly longer delay
+      setTimeout(handleResize, 300);
+    });
+    window.addEventListener('scroll', handleVisualViewportResize, { passive: true });
     
     if (innerContent) {
       innerContent.addEventListener('scroll', handleScroll, { passive: true });
     }
     
-    // Clean up event listeners
+    // Setup interval to catch edge cases
+    const checkInterval = setInterval(() => {
+      const newHeight = window.innerHeight;
+      if (Math.abs(newHeight - lastHeight) > 20) {
+        lastHeight = newHeight;
+        updateHeight(drawerContent.classList.contains('fully-expanded'));
+      }
+    }, 500);
+    
+    // Clean up all event listeners
     return () => {
+      if (isIOS && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+        window.visualViewport.removeEventListener('scroll', handleVisualViewportResize);
+      }
+      
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-      window.removeEventListener('scroll', handleWindowScroll);
+      window.removeEventListener('orientationchange', () => setTimeout(handleResize, 300));
+      window.removeEventListener('scroll', handleVisualViewportResize);
       
       if (innerContent) {
         innerContent.removeEventListener('scroll', handleScroll);
+      }
+      
+      clearInterval(checkInterval);
+    };
+  }, [selectedProject]);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+
+    const setDrawerHeight = () => {
+      const vh = window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+      document.documentElement.style.setProperty('--drawer-viewport-height', `${vh}px`);
+    };
+
+    setDrawerHeight();
+
+    window.addEventListener('resize', setDrawerHeight);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', setDrawerHeight);
+      window.visualViewport.addEventListener('scroll', setDrawerHeight);
+    }
+
+    return () => {
+      window.removeEventListener('resize', setDrawerHeight);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', setDrawerHeight);
+        window.visualViewport.removeEventListener('scroll', setDrawerHeight);
       }
     };
   }, [selectedProject]);
@@ -389,10 +473,10 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
             if (!open) setSelectedProject(null);
           }}
         >
-          <DrawerContent className="h-screen max-h-screen drawer-override">
+          <DrawerContent className="drawer-override">
             {/* Added max-width container for desktop */}
-            <div className="mx-auto w-full max-w-[1440px] h-full drawer-container-override">
-              <div className="h-full overflow-y-auto p-6 sm:p-10">
+            <div className="mx-auto w-full max-w-[1440px] drawer-container-override">
+              <div className="overflow-y-auto p-6 sm:p-10">
                 {/* Close Button */}
                 <DrawerClose className="absolute right-4 top-4 z-50">
                   <Button variant="ghost" size="icon">
@@ -451,6 +535,8 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                 {projectImages.length > 1 && (
                   <div className="mb-8">
                     <div className="flex flex-col space-y-6">
+
+                      
                       {projectImages.slice(1).map((image, index) => (
                         <div 
                           key={index + 1}
@@ -465,7 +551,7 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                               src={urlForImage(image).url()}
                               alt={`${selectedProject?.title} image ${index + 2}`}
                               fill
-                              className="object-cover hover:scale-105 transition-transform duration-300"
+                              className="object-cover" // Removed hover:scale-105 transition-transform duration-300
                             />
                           </div>
                           {/* Fix the type casting for the image */}

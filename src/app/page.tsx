@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { client } from "@/lib/sanity.client";
 import { Container } from "@/components/layout/container";
 import { ProjectsGrid, Project } from "@/components/ProjectsGrids";
+import "./globals.css";
 
 interface Category {
   title: string;
