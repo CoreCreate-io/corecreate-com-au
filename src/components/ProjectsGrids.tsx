@@ -349,7 +349,7 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
         </>
       )}
 
-      
+
       {/* Progress bars with improved click handlers and styling */}
       <div className="absolute bottom-0 left-0 right-0 z-10 flex gap-1 p-2">
         {projectImages.map((_, idx) => (
@@ -800,36 +800,43 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                   </div>
                 )}
                 
+                // Update the Image Gallery section around line 820
+                
                 {/* Image Gallery - Skip first image if it's the same as featured image */}
                 {projectImages.length > 1 && (
                   <div className="mb-8">
                     <div className="flex flex-col space-y-6">
-                      {projectImages.slice(1).map((image, index) => (
-                        <div 
-                          key={index}
-                          className="relative cursor-pointer rounded-md overflow-hidden"
-                          onClick={() => {
-                            // Add 1 to index because we're skipping the first image
-                            setCurrentImageIndex(index + 1);
-                            setLightboxOpen(true);
-                          }}
-                        >
-                          <div className="aspect-video relative">
-                            <Image
-                              src={urlForImage(image).url()}
-                              alt={image.caption || `${selectedProject?.title} image ${index + 2}`}
-                              fill
-                              className="object-cover"
-                            />
+                      {projectImages.slice(1).map((image, index) => {
+                        // Use type assertion to tell TypeScript this might be a SanityImageWithCaption
+                        const imageWithCaption = image as SanityImageWithCaption;
+                        
+                        return (
+                          <div 
+                            key={index}
+                            className="relative cursor-pointer rounded-md overflow-hidden"
+                            onClick={() => {
+                              // Add 1 to index because we're skipping the first image
+                              setCurrentImageIndex(index + 1);
+                              setLightboxOpen(true);
+                            }}
+                          >
+                            <div className="aspect-video relative">
+                              <Image
+                                src={urlForImage(image).url()}
+                                alt={imageWithCaption.caption || `${selectedProject?.title} image ${index + 2}`}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            {imageWithCaption.caption && (
+                              <p className="text-sm text-muted-foreground mt-1 px-2 pb-2">
+                                {imageWithCaption.caption}
+                              </p>
+                            )}
                           </div>
-                          {image.caption && (
-                            <p className="text-sm text-muted-foreground mt-1 px-2 pb-2">
-                              {image.caption}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div> {/* <-- THIS CLOSING DIV TAG WAS MISSING */}
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
