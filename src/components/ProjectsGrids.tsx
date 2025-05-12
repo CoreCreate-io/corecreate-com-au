@@ -19,31 +19,31 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 
-// Update your Project interface to match the actual schema structure
+// Add these interface definitions
+interface SanityImage {
+  _type: string;
+  asset: {
+    _ref: string;
+    _type: string;
+  };
+  alt?: string;
+}
+
+interface SanityImageWithCaption extends SanityImage {
+  _key: string;
+  caption?: string;
+}
+
+// First, update your interface to include a more specific type for gallery images
 export interface Project {
   _id: string;
   title: string;
   slug: { current: string };
   description?: string;
-  featuredImage: {
-    _type: string;
-    asset: {
-      _ref: string;
-      _type: string;
-    };
-  };
+  featuredImage: SanityImage;
   // Match your actual schema structure
   gallery?: {
-    images?: Array<{
-      _key: string;
-      _type: string;
-      asset: {
-        _ref: string;
-        _type: string;
-      };
-      alt?: string;
-      caption?: string;
-    }>;
+    images?: Array<SanityImageWithCaption>;
     display?: 'stacked' | 'grid' | 'carousel' | 'masonry';
     zoom?: boolean;
   };
@@ -386,9 +386,8 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
           onOpenChange={(open) => {
             if (!open) setSelectedProject(null);
           }}
-          className="drawer-override"
         >
-          <DrawerContent className="h-screen max-h-screen">
+          <DrawerContent className="h-screen max-h-screen drawer-override">
             {/* Added max-width container for desktop */}
             <div className="mx-auto w-full max-w-[1440px] h-full drawer-container-override">
               <div className="h-full overflow-y-auto p-6 sm:p-10">
@@ -467,9 +466,10 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                               className="object-cover hover:scale-105 transition-transform duration-300"
                             />
                           </div>
-                          {'caption' in image && image.caption && (
+                          {/* Fix the type casting for the image */}
+                          {('caption' in image && (image as SanityImageWithCaption).caption) && (
                             <div className="p-3 bg-background/5 text-sm">
-                              {image.caption}
+                              {(image as SanityImageWithCaption).caption}
                             </div>
                           )}
                         </div>
@@ -489,8 +489,6 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
             if (!open) setLightboxOpen(false);
           }}
           modal={true}
-          // Force override any parent styles
-          className="lightbox-override"
         >
           <DialogContent 
             className="p-0 border-none bg-black/95 rounded-none m-0 overflow-hidden lightbox-content-override"
