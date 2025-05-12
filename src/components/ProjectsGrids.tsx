@@ -210,8 +210,6 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].pageY;
-    // Important: add a flag to track if we've moved significantly
-    touchMoved.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -222,31 +220,28 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     const diffX = touchStartX.current - touchEndX;
     const diffY = touchStartY.current - touchEndY;
     
-    // CRITICAL: Check direction EARLY and prevent default IMMEDIATELY for horizontal moves
-    if (Math.abs(diffX) > Math.abs(diffY) * 1.1) {
-      // This is likely a horizontal swipe - prevent ALL scrolling immediately
+    // More aggressive horizontal swipe detection - lower threshold and stronger directional bias
+    if (!isHorizontalSwiping && Math.abs(diffX) > Math.abs(diffY) * 1.2 && Math.abs(diffX) > 5) {
+      setIsHorizontalSwiping(true);
+      
+      // Apply body scroll lock when horizontal swipe is detected
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    }
+    
+    // If we're in a horizontal swipe, always prevent default behavior
+    if (isHorizontalSwiping) {
       e.preventDefault();
-      touchMoved.current = true;
+      e.stopPropagation();
       
-      // If we haven't already set horizontal swiping state
-      if (!isHorizontalSwiping) {
-        setIsHorizontalSwiping(true);
-        
-        // Apply stronger scroll prevention
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed'; // This is key - fix the body position
-        document.body.style.width = '100%';     // Maintain width
-        document.body.style.top = `-${window.scrollY}px`; // Remember scroll position
-        document.body.style.touchAction = 'none';
-      }
-      
-      // Navigation logic for significant movement
+      // Only trigger navigation after a significant movement (50px)
       if (Math.abs(diffX) > 50) {
         if (diffX > 0) {
           nextSlide();
         } else {
           prevSlide();
         }
+        // Reset touch tracking after navigation
         touchStartX.current = null;
         touchStartY.current = null;
       }
@@ -254,22 +249,13 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   };
 
   const handleTouchEnd = () => { 
-    // Remember scroll position before resetting
-    const scrollY = document.body.style.top ? parseInt(document.body.style.top || '0') * -1 : 0;
-    
     touchStartX.current = null;
     touchStartY.current = null;
     
     if (isHorizontalSwiping) {
-      // Restore normal scrolling
+      // Restore scroll behavior when touch ends
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
       document.body.style.touchAction = '';
-      
-      // Restore scroll position
-      window.scrollTo(0, scrollY);
     }
     
     setIsHorizontalSwiping(false);
@@ -287,26 +273,16 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   // Return your component with updated event handlers and CSS
 return (
   <div 
-    className="w-full h-full relative select-none"
+    className="w-full h-full relative select-none touch-none"
     style={{ 
-      WebkitTouchCallout: 'none',
-      WebkitUserSelect: 'none',
-      userSelect: 'none',
-      touchAction: 'pan-y', // Allow vertical panning by default
-      overscrollBehaviorX: 'none',
-      overscrollBehaviorY: isHorizontalSwiping ? 'none' : 'auto',
-      WebkitOverflowScrolling: 'touch', // Smoother scrolling on iOS
+      WebkitTouchCallout: 'none', /* iOS Safari */
+      WebkitUserSelect: 'none',    /* Safari */
+      userSelect: 'none',          /* Standard */
+      touchAction: isHorizontalSwiping ? 'pan-y' : 'auto'
     }}
-    // Mark this event as passive: false for iOS Safari
+    onContextMenu={(e) => e.preventDefault()} /* Prevent long-press context menu */
     onTouchStart={handleTouchStart}
-    onTouchMove={(e) => {
-      // Using the non-passive handler technique
-      if (touchStartX.current) {
-        e.stopPropagation();
-        // iOS Safari needs this non-passive approach
-        handleTouchMove(e);
-      }
-    }}
+    onTouchMove={handleTouchMove}
     onTouchEnd={handleTouchEnd}
     onMouseEnter={() => {
       // Only enable hover behavior on non-mobile devices
@@ -810,7 +786,7 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                           )}
                         </div>
                       ))}
-                    </div>
+                    </div> {/* <-- THIS CLOSING DIV TAG WAS MISSING */}
                   </div>
                 )}
               </div>
