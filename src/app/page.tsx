@@ -3,10 +3,6 @@ import { client } from "@/sanity/lib/client";
 import { Container } from "@/components/layout/container";
 import "./globals.css";
 
-interface Category {
-  title: string;
-  categoryType: string;
-}
 
 // Fetch projects with video data
 async function getProjects() {
