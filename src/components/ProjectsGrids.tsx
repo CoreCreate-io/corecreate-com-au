@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,33 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Add touch swipe detection for mobile devices
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartX.current) return;
+    
+    const touchEndX = e.touches[0].clientX;
+    const diffX = touchStartX.current - touchEndX;
+    
+    // Determine direction based on touch difference (with threshold)
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        // Swiped left, go to next image
+        nextImage();
+      } else {
+        // Swiped right, go to previous image
+        prevImage();
+      }
+      // Reset touch start to prevent multiple triggers in one gesture
+      touchStartX.current = null;
+    }
+  };
+
+  const touchStartX = useRef<number | null>(null);
+
   // Filter projects based on search query and active category
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -143,6 +170,97 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
     if (e.key === 'ArrowLeft') prevImage();
     if (e.key === 'Escape') setLightboxOpen(false);
   };
+
+  // Update the drawer scroll behavior useEffect
+  useEffect(() => {
+    // Get references to DOM elements
+    const drawerContent = document.querySelector('[data-vaul-drawer-content][data-vaul-drawer-direction="bottom"]');
+    const innerContent = document.querySelector('.drawer-container-override');
+    
+    if (!drawerContent || !selectedProject) return;
+    
+    // iOS Safari detection
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    
+    // Function to measure and apply the correct height
+    const updateHeight = (expand = false) => {
+      // Get the actual viewport height (this will change when Safari UI shows/hides)
+      const windowHeight = window.innerHeight;
+      
+      // Different heights for mobile vs desktop
+      if (window.innerWidth < 768) {
+        // For mobile: start at 85% height, full height when expanded
+        const height = expand ? windowHeight : Math.floor(windowHeight * 0.85);
+        
+        // Force height directly on the element
+        (drawerContent as HTMLElement).style.height = `${height}px`;
+        (drawerContent as HTMLElement).style.maxHeight = `${height}px`;
+        
+        // Update class for CSS transitions
+        if (expand) {
+          drawerContent.classList.add('fully-expanded');
+        } else {
+          drawerContent.classList.remove('fully-expanded');
+        }
+      } else {
+        // For desktop: always full height
+        (drawerContent as HTMLElement).style.height = `${windowHeight}px`;
+        (drawerContent as HTMLElement).style.maxHeight = `${windowHeight}px`;
+      }
+    };
+    
+    // Set the initial height when the drawer opens
+    updateHeight(false);
+    
+    // Handle scroll events for expanding/contracting
+    const handleScroll = () => {
+      if (window.innerWidth >= 768 || !innerContent) return;
+      
+      const scrollTop = (innerContent as HTMLElement).scrollTop;
+      
+      // Expand when scrolled down, contract when scrolled back to top
+      if (scrollTop > 50 && !drawerContent.classList.contains('fully-expanded')) {
+        updateHeight(true);
+      } else if (scrollTop < 20 && drawerContent.classList.contains('fully-expanded')) {
+        updateHeight(false);
+      }
+    };
+    
+    // For iOS Safari, handle window scroll events to detect address bar changes
+    const handleWindowScroll = () => {
+      if (isIOS) {
+        // Small delay to let Safari UI settle
+        setTimeout(() => {
+          updateHeight(drawerContent.classList.contains('fully-expanded'));
+        }, 100);
+      }
+    };
+    
+    // Handle orientation changes and resize events
+    const handleResize = () => {
+      updateHeight(drawerContent.classList.contains('fully-expanded'));
+    };
+    
+    // Attach event listeners
+    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('orientationchange', handleResize);
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    
+    if (innerContent) {
+      innerContent.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
+    // Clean up event listeners
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      window.removeEventListener('scroll', handleWindowScroll);
+      
+      if (innerContent) {
+        innerContent.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [selectedProject]);
 
   return (
     <>
@@ -268,88 +386,98 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
           onOpenChange={(open) => {
             if (!open) setSelectedProject(null);
           }}
+          className="drawer-override"
         >
-          <DrawerContent className="h-[95vh] max-h-[95vh]">
-            <div className="h-full overflow-y-auto p-6 sm:p-10">
-              {/* Close Button */}
-              <DrawerClose className="absolute right-4 top-4 z-50">
-                <Button variant="ghost" size="icon">
-                  <X className="h-6 w-6" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </DrawerClose>
-              
-              {/* Project Header */}
-              <div className="mb-8">
-                <h2 className="text-3xl font-heading font-semibold">{selectedProject?.title}</h2>
-                {selectedProject?.clientInfo?.clientName && (
-                  <p className="text-xl text-muted-foreground mt-1">
-                    {selectedProject.clientInfo.clientName}
-                  </p>
+          <DrawerContent className="h-screen max-h-screen">
+            {/* Added max-width container for desktop */}
+            <div className="mx-auto w-full max-w-[1440px] h-full drawer-container-override">
+              <div className="h-full overflow-y-auto p-6 sm:p-10">
+                {/* Close Button */}
+                <DrawerClose className="absolute right-4 top-4 z-50">
+                  <Button variant="ghost" size="icon">
+                    <X className="h-6 w-6" />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </DrawerClose>
+                
+                {/* Project Header */}
+                <div className="mb-8">
+                  <h2 className="text-3xl font-heading font-semibold">{selectedProject?.title}</h2>
+                  {selectedProject?.clientInfo?.clientName && (
+                    <p className="text-xl text-muted-foreground mt-1">
+                      {selectedProject.clientInfo.clientName}
+                    </p>
+                  )}
+                  
+                  {/* Project Categories */}
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {selectedProject?.projectField && (
+                      <Badge>{selectedProject.projectField.title}</Badge>
+                    )}
+                    {selectedProject?.projectSector && (
+                      <Badge variant="secondary">{selectedProject.projectSector.title}</Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Project Description */}
+                {selectedProject?.description && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-medium mb-3">About this project</h3>
+                    <p className="text-muted-foreground text-lg leading-relaxed">{selectedProject.description}</p>
+                  </div>
                 )}
                 
-                {/* Project Categories */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {selectedProject?.projectField && (
-                    <Badge>{selectedProject.projectField.title}</Badge>
-                  )}
-                  {selectedProject?.projectSector && (
-                    <Badge variant="secondary">{selectedProject.projectSector.title}</Badge>
-                  )}
-                </div>
-              </div>
-              
-              {/* Project Description */}
-              {selectedProject?.description && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-medium mb-3">About this project</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">{selectedProject.description}</p>
-                </div>
-              )}
-              
-              {/* Featured Image */}
-              {projectImages.length > 0 && (
-                <div className="mb-8">
-                  <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                    <Image
-                      src={urlForImage(projectImages[0]).url()}
-                      alt={selectedProject?.title || "Project featured image"}
-                      fill
-                      className="object-cover"
-                      onClick={() => {
-                        setCurrentImageIndex(0);
-                        setLightboxOpen(true);
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              {/* Image Gallery */}
-              {projectImages.length > 1 && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-medium mb-4">Project Gallery</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {projectImages.map((image, index) => (
-                      <div 
-                        key={index}
-                        className="aspect-square relative cursor-pointer rounded-md overflow-hidden"
+                {/* Featured Image */}
+                {projectImages.length > 0 && (
+                  <div className="mb-8">
+                    <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                      <Image
+                        src={urlForImage(projectImages[0]).url()}
+                        alt={selectedProject?.title || "Project featured image"}
+                        fill
+                        className="object-cover cursor-pointer"
                         onClick={() => {
-                          setCurrentImageIndex(index);
+                          setCurrentImageIndex(0);
                           setLightboxOpen(true);
                         }}
-                      >
-                        <Image
-                          src={urlForImage(image).url()}
-                          alt={`${selectedProject?.title} image ${index + 1}`}
-                          fill
-                          className="object-cover hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    ))}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                
+                {/* Image Gallery */}
+                {projectImages.length > 1 && (
+                  <div className="mb-8">
+                    <div className="flex flex-col space-y-6">
+                      {projectImages.slice(1).map((image, index) => (
+                        <div 
+                          key={index + 1}
+                          className="relative cursor-pointer rounded-md overflow-hidden"
+                          onClick={() => {
+                            setCurrentImageIndex(index + 1);
+                            setLightboxOpen(true);
+                          }}
+                        >
+                          <div className="relative aspect-video w-full">
+                            <Image
+                              src={urlForImage(image).url()}
+                              alt={`${selectedProject?.title} image ${index + 2}`}
+                              fill
+                              className="object-cover hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                          {'caption' in image && image.caption && (
+                            <div className="p-3 bg-background/5 text-sm">
+                              {image.caption}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </DrawerContent>
         </Drawer>
@@ -357,59 +485,108 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
         {/* Lightbox Dialog */}
         <Dialog 
           open={lightboxOpen} 
-          onOpenChange={setLightboxOpen}
+          onOpenChange={(open) => {
+            if (!open) setLightboxOpen(false);
+          }}
+          modal={true}
+          // Force override any parent styles
+          className="lightbox-override"
         >
           <DialogContent 
-            className="sm:max-w-[95vw] max-h-[95vh] p-0 border-none bg-black/90"
+            className="p-0 border-none bg-black/95 rounded-none m-0 overflow-hidden lightbox-content-override"
+            style={{ 
+              position: 'fixed',
+              width: '100vw',
+              height: '100vh',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              transform: 'none !important',
+              maxWidth: '100vw',
+              maxHeight: '100vh',
+              zIndex: 9999
+            }}
             onKeyDown={handleKeyDown}
           >
             {projectImages.length > 0 && (
-              <div className="relative h-[90vh] w-full flex items-center justify-center">
-                <div className="relative h-full w-full flex items-center justify-center">
+              <div 
+                className="fixed inset-0 w-full h-full flex items-center justify-center"
+                style={{ 
+                  touchAction: 'pan-y',
+                  transform: 'none !important' 
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={() => { touchStartX.current = null; }}
+              >
+                {/* Project info in top left */}
+                <div className="absolute top-0 left-0 p-6 z-20 text-white">
+                  <h3 className="text-xl font-medium">
+                    {selectedProject?.title}
+                  </h3>
+                  {selectedProject?.clientInfo?.clientName && (
+                    <p className="text-sm text-white/70">
+                      {selectedProject.clientInfo.clientName}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Main image */}
+                <div className="absolute inset-0 flex items-center justify-center">
                   <Image
                     src={urlForImage(projectImages[currentImageIndex]).url()}
                     alt={`${selectedProject?.title} image ${currentImageIndex + 1}`}
                     fill
+                    sizes="100vw"
                     className="object-contain"
+                    unoptimized
+                    priority
                   />
                 </div>
                 
-                {/* Navigation Buttons */}
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="absolute left-4 rounded-full bg-black/20 hover:bg-black/40" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevImage();
-                  }}
-                  aria-label="Previous image"
+                {/* Close Button - made larger and more prominent */}
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute right-4 top-4 z-50 bg-black/60 hover:bg-black/80 text-white h-10 w-10"
+                  onClick={() => setLightboxOpen(false)}
                 >
-                  <ChevronLeft className="h-6 w-6 text-white" />
-                </Button>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="absolute right-4 rounded-full bg-black/20 hover:bg-black/40" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextImage();
-                  }}
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="h-6 w-6 text-white" />
-                </Button>
-                
-                {/* Close Button */}
-                <DrawerClose className="absolute right-4 top-4 text-white">
                   <X className="h-6 w-6" />
                   <span className="sr-only">Close</span>
-                </DrawerClose>
+                </Button>
                 
-                {/* Image Counter */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/40 text-white px-3 py-1 rounded-full text-sm">
-                  {currentImageIndex + 1} / {projectImages.length}
+                {/* Navigation buttons */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center z-30">
+                  <div className="flex space-x-4">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="bg-black/40 hover:bg-black/60 text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevImage();
+                      }}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                    
+                    <div className="bg-black/40 text-white px-3 py-1 rounded-full text-sm flex items-center">
+                      {currentImageIndex + 1} / {projectImages.length}
+                    </div>
+                    
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="bg-black/40 hover:bg-black/60 text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextImage();
+                      }}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
