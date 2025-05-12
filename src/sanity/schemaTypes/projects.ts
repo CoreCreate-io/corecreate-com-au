@@ -28,6 +28,25 @@ export default defineType({
   ],
   fields: [
         // Add the featured field
+        defineField({
+  name: 'featuredVideoEnabled',
+  title: 'Enable Featured Video',
+  type: 'boolean',
+  description: 'Toggle to show a featured video at the top of the project (replaces featured image as cover)',
+  initialValue: false,
+  group: 'media',
+}),
+defineField({
+  name: 'featuredVideo',
+  title: 'Featured Video',
+  type: 'file',
+  description: 'Upload a video to display as the featured cover. Will autoplay.',
+  options: {
+    accept: 'video/*',
+  },
+  group: 'media',
+  hidden: ({ parent }) => !parent?.featuredVideoEnabled,
+}),
     defineField({
       name: 'featured',
       title: 'Featured Project',

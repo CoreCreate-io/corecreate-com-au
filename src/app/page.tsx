@@ -1,9 +1,6 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { client } from "@/lib/sanity.client";
+import { ProjectsGrid } from "@/components/ProjectsGrids";
+import { client } from "@/sanity/lib/client";
 import { Container } from "@/components/layout/container";
-import { ProjectsGrid, Project } from "@/components/ProjectsGrids";
 import "./globals.css";
 
 interface Category {
@@ -11,57 +8,43 @@ interface Category {
   categoryType: string;
 }
 
-export default function Home() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [categories, setCategories] = useState<string[]>(["Featured"]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch projects and categories from Sanity
-  useEffect(() => {
-    async function fetchProjects() {
-      setLoading(true);
-      try {
-        // Fetch projects with their fields and sectors
-        const projectsData = await client.fetch(`
-          *[_type == "project"] | order(publishedAt desc) {
-            _id,
-            title,
-            slug,
-            description,
-            featuredImage,
-            gallery{images, display, zoom},  // This is the correct way to query the nested structure
-            projectField->{title},
-            projectSector->{title},
-            clientInfo,
-            featured
-          }
-        `);
-        
-        // Fetch unique field and sector categories
-        const categoriesData = await client.fetch(`
-          *[_type == "category"] | order(order asc) {
-            title,
-            categoryType
-          }
-        `);
-        
-        // Extract unique category titles and add "Featured" at the beginning
-        const categoryTitles: string[] = categoriesData.map((cat: Category) => cat.title);
-        const uniqueCategories: string[] = ["Featured", ...new Set(categoryTitles)];
-
-        // Set state after both requests complete
-        setProjects(projectsData);
-        setCategories(uniqueCategories);
-      } catch (error) {
-        console.error("Error fetching data from Sanity:", error);
-      } finally {
-        setLoading(false);
-      }
+// Fetch projects with video data
+async function getProjects() {
+  return await client.fetch(`
+    *[_type == "project"]{
+      _id,
+      title,
+      slug,
+      description,
+      featuredImage,
+      featuredVideoEnabled,
+      featuredVideo{
+        asset->{
+          url
+        }
+      },
+      gallery,
+      projectField->{title},
+      projectSector->{title},
+      clientInfo,
+      featured
     }
+  `);
+}
 
-    fetchProjects();
-  }, []);
+// Fetch categories for filtering
+async function getCategories() {
+  const categories = await client.fetch(`
+    *[_type == "category"]{
+      title
+    }
+  `);
+  return ["Featured", ...categories.map((cat: any) => cat.title)];
+}
 
+export default async function ProjectsPage() {
+  const projects = await getProjects();
+  const categories = await getCategories();
   return (
     <main className="min-h-screen pb-16">
       {/* Hero Section */}
@@ -85,7 +68,7 @@ export default function Home() {
       <ProjectsGrid 
         projects={projects} 
         categories={categories} 
-        loading={loading} 
+        loading={false} 
       />
     </main>
   );

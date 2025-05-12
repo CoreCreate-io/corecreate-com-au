@@ -320,3 +320,12 @@
     /* Remove Tailwind's mb-24, max-h-[80vh], rounded-b-lg, border-b, etc. */
   }
 }
+
+
+/* Prevent Safari image save popup and improve mobile touch experience */
+.carousel-image-container {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  touch-action: manipulation;
+}
