@@ -255,6 +255,13 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     setIsHorizontalSwiping(false);
   };
 
+  // Add this helper function to calculate adjacent indices
+  const getAdjacentIndices = useCallback(() => {
+    const prev = (currentIndex - 1 + projectImages.length) % projectImages.length;
+    const next = (currentIndex + 1) % projectImages.length;
+    return { prev, next };
+  }, [currentIndex, projectImages.length]);
+
   // NOW you can do the conditional return - after all hooks
   if (projectImages.length <= 1) {
     return (
@@ -271,7 +278,7 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   // Complete component rendering
   return (
     <div 
-      className="w-full h-full relative select-none"
+      className="w-full h-full relative select-none rounded-lg overflow-hidden"
       onContextMenu={(e) => e.preventDefault()}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -383,15 +390,53 @@ const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
         ))}
       </div>
       
-      {/* Current image */}
-      <Image
-        src={urlForImage(projectImages[currentIndex]).url()}
-        alt={project.title}
-        fill
-        priority={true}
-        className="object-cover transition-transform duration-300"
-        draggable={false}
-      />
+      {/* Preload adjacent images */}
+      <div className="hidden">
+        {projectImages.length > 1 && (
+          <>
+            <Image 
+              src={urlForImage(projectImages[getAdjacentIndices().prev]).url()}
+              alt="Preload previous"
+              width={10}
+              height={10}
+              priority={true}
+            />
+            <Image 
+              src={urlForImage(projectImages[getAdjacentIndices().next]).url()}
+              alt="Preload next"
+              width={10}
+              height={10}
+              priority={true}
+            />
+          </>
+        )}
+      </div>
+      
+      {/* Main image with transition */}
+      <div className="w-full h-full relative">
+        {projectImages.map((image, idx) => (
+          <div
+            key={idx}
+            className="absolute inset-0"
+            style={{
+              opacity: idx === currentIndex ? 1 : 0,
+              zIndex: idx === currentIndex ? 2 : 1,
+              pointerEvents: idx === currentIndex ? 'auto' : 'none',
+            }}
+          >
+            <Image
+              src={urlForImage(image).url()}
+              alt={project.title}
+              fill
+              priority={idx === currentIndex || 
+                      idx === getAdjacentIndices().prev || 
+                      idx === getAdjacentIndices().next}
+              className="object-cover"
+              draggable={false}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -667,35 +712,37 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredProjects.map((project) => (
-                  <div 
-                    key={project._id}
-                    className="group relative overflow-hidden rounded-lg cursor-pointer"
-                    onClick={() => {
-                      setSelectedProject(project);
-                      setCurrentImageIndex(0);
-                    }}
-                  >
-                    {/* Project Image or Video */}
-                    <div className="h-80 md:h-110 relative">
-                      {project.featuredVideoEnabled && project.featuredVideo?.asset?.url ? (
-                        <video
-                          src={project.featuredVideo.asset.url}
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                          className="object-cover w-full h-full"
-                          style={{ objectFit: "cover" }}
-                        />
-                      ) : project.featuredImage ? (
-                        <ProjectThumbnailCarousel project={project} />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-muted">
-                          <p className="text-muted-foreground">No image</p>
+                    {filteredProjects.map((project) => (
+                      <div 
+                        key={project._id}
+                        className="group relative overflow-hidden rounded-lg cursor-pointer"
+                        onClick={() => {
+                          setSelectedProject(project);
+                          setCurrentImageIndex(0);
+                        }}
+                      >
+                        {/* Project Image or Video */}
+                        <div className="h-80 md:h-110 relative overflow-hidden rounded-lg">
+                          {project.featuredVideoEnabled && project.featuredVideo?.asset?.url ? (
+                            <video
+                              src={project.featuredVideo.asset.url}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              className="object-cover w-full h-full rounded-lg"
+                              style={{ objectFit: "cover" }}
+                            />
+                          ) : project.featuredImage ? (
+                            <div className="rounded-lg overflow-hidden w-full h-full">
+                              <ProjectThumbnailCarousel project={project} />
+                            </div>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
+                              <p className="text-muted-foreground">No image</p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
                     
                     {/* Project Info */}
                     <div className="mt-3">
