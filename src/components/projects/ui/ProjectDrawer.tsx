@@ -35,15 +35,14 @@ export const ProjectDrawer = ({
 }: ProjectDrawerProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [imageOrientations, setImageOrientations] = useState<ImageOrientations>({});
-  const imageRefs = useRef<{[key: string]: HTMLImageElement | null}>({});
   
   // Detect image orientations for all project images
   useEffect(() => {
     if (!selectedProject || projectImages.length === 0) return;
 
     // Pre-load images to detect dimensions
-    projectImages.forEach((image, index) => {
-      const imgKey = `img-${index}`;
+    projectImages.forEach((image, _index) => {
+      const imgKey = `img-${_index}`;
       // Use window.Image explicitly to avoid conflict with Next.js Image component
       const img = new window.Image();
       const imageUrl = urlForImage(image).url();
@@ -63,7 +62,7 @@ export const ProjectDrawer = ({
   useEffect(() => {
     if (selectedProject && projectImages.length > 0) {
       // Preload all images
-      projectImages.forEach((image, index) => {
+      projectImages.forEach((image, _index) => {
         const img = new window.Image();
         img.src = urlForImage(image).url();
       });

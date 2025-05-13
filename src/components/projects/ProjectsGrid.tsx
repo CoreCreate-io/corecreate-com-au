@@ -26,7 +26,6 @@ interface ProjectsGridProps {
 export function ProjectsGrid({ projects, categories, loading, initialProjectSlug }: ProjectsGridProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   
   // Add state to track if the user directly accessed a project URL
   const [isDirectAccess, setIsDirectAccess] = useState(false);
