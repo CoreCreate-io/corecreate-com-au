@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image"; // This import is shadowing the global Image constructor
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -41,8 +41,8 @@ export const ProjectDrawer = ({
     if (!selectedProject || projectImages.length === 0) return;
 
     // Pre-load images to detect dimensions
-    projectImages.forEach((image, _index) => {
-      const imgKey = `img-${_index}`;
+    projectImages.forEach((image, i) => {
+      const imgKey = `img-${i}`;
       // Use window.Image explicitly to avoid conflict with Next.js Image component
       const img = new window.Image();
       const imageUrl = urlForImage(image).url();
@@ -62,7 +62,7 @@ export const ProjectDrawer = ({
   useEffect(() => {
     if (selectedProject && projectImages.length > 0) {
       // Preload all images
-      projectImages.forEach((image, _index) => {
+      projectImages.forEach((image) => {
         const img = new window.Image();
         img.src = urlForImage(image).url();
       });
