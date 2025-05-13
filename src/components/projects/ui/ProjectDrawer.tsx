@@ -17,6 +17,7 @@ interface ProjectDrawerProps {
   projectImages: Array<SanityImage | SanityImageWithCaption>;
   setCurrentImageIndex: (index: number) => void;
   setLightboxOpen: (open: boolean) => void;
+  isClosing?: boolean; // Add this prop
 }
 
 // Track image orientations
@@ -29,7 +30,8 @@ export const ProjectDrawer = ({
   setSelectedProject,
   projectImages,
   setCurrentImageIndex,
-  setLightboxOpen
+  setLightboxOpen,
+  isClosing = false // Default to false
 }: ProjectDrawerProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [imageOrientations, setImageOrientations] = useState<ImageOrientations>({});
@@ -215,12 +217,16 @@ export const ProjectDrawer = ({
   };
 
   return (
-    <Drawer 
-      open={selectedProject !== null} 
-      onOpenChange={(open) => {
-        if (!open) setSelectedProject(null);
-      }}
-    >
+<Drawer 
+  open={selectedProject !== null} 
+  onOpenChange={(open) => {
+    // Only handle close events from UI interactions, and only if not already closing
+    if (!open && selectedProject !== null && !isClosing) {
+      setSelectedProject(null);
+    }
+    // Never handle open events - let the parent component control opening
+  }}
+>
       <DrawerContent className="drawer-override">
         <div className="mx-auto w-full max-w-[1440px] drawer-container-override">
           {/* Content area with adjusted padding based on screen size */}

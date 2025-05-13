@@ -3,6 +3,7 @@ import { getProjects } from "@/app/page";
 import { client } from "@/sanity/lib/client"; 
 import { Metadata } from 'next';
 import { urlForImage } from "@/lib/image";
+import { Container } from "@/components/layout/container";
 
 interface PageProps {
   params: {

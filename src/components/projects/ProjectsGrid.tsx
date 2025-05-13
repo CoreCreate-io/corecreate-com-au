@@ -28,6 +28,9 @@ export function ProjectsGrid({ projects, categories, loading, initialProjectSlug
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
+  // Add state to track if the user directly accessed a project URL
+  const [isDirectAccess, setIsDirectAccess] = useState(false);
+  
   // Project filtering
   const { 
     searchQuery, setSearchQuery, 
@@ -49,34 +52,44 @@ export function ProjectsGrid({ projects, categories, loading, initialProjectSlug
     handleLightboxTouchStart, handleLightboxTouchMove, touchStartX
   } = useLightbox(projectImages.length);
 
+  // Add state to track drawer closing animation
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Check if user came directly to a project URL
+  useEffect(() => {
+    if (initialProjectSlug && !isClosing) {
+      setIsDirectAccess(true);
+      // Find the project with matching slug
+      const projectFromUrl = projects?.find(p => p.slug?.current === initialProjectSlug);
+      if (projectFromUrl && !selectedProject) {
+        setSelectedProject(projectFromUrl);
+        setCurrentImageIndex(0);
+      }
+    }
+  }, [initialProjectSlug, projects, selectedProject, setCurrentImageIndex, isClosing]);
+
   // Handle URL-based project selection - for direct links
   useEffect(() => {
-    // Check if pathname includes '/projects/' - this would match /projects/[slug]
-    const pathSegments = pathname.split('/');
-    if (pathSegments.length >= 3 && pathSegments[1] === 'projects') {
-      const projectSlug = pathSegments[2];
-      
-      // Find the project with matching slug
-      const projectFromUrl = projects?.find(p => p.slug?.current === projectSlug);
-      if (projectFromUrl && !selectedProject) {
-        setSelectedProject(projectFromUrl);
-        setCurrentImageIndex(0);
+    // Only process if we're not in the middle of closing
+    if (!isClosing) {
+      // Check if pathname includes '/projects/' - this would match /projects/[slug]
+      const pathSegments = pathname.split('/');
+      if (pathSegments.length >= 3 && pathSegments[1] === 'projects') {
+        const projectSlug = pathSegments[2];
+        
+        // Find the project with matching slug
+        const projectFromUrl = projects?.find(p => p.slug?.current === projectSlug);
+        if (projectFromUrl && !selectedProject) {
+          setSelectedProject(projectFromUrl);
+          setCurrentImageIndex(0);
+          // If coming from URL, mark as direct access
+          setIsDirectAccess(true);
+        }
       }
     }
-  }, [pathname, projects, selectedProject, setCurrentImageIndex]);
+  }, [pathname, projects, selectedProject, setCurrentImageIndex, isClosing]);
 
-  // Add this to handle initial project selection on direct URL visits
-  useEffect(() => {
-    if (initialProjectSlug && projects) {
-      const projectFromUrl = projects.find(p => p.slug?.current === initialProjectSlug);
-      if (projectFromUrl && !selectedProject) {
-        setSelectedProject(projectFromUrl);
-        setCurrentImageIndex(0);
-      }
-    }
-  }, [initialProjectSlug, projects]);
-
-  // Update handleProjectSelect with this smoother approach
+  // Handle project selection (regular browsing)
   const handleProjectSelect = (project: Project) => {
     // Update state first
     setSelectedProject(project);
@@ -93,16 +106,36 @@ export function ProjectsGrid({ projects, categories, loading, initialProjectSlug
     }
   };
 
-  // Update handleProjectClose with direct history API
+  // Special handling for project closing based on access method
   const handleProjectClose = () => {
+    // First mark as closing to prevent any reopening
+    setIsClosing(true);
+    
+    // Then null out the project
     setSelectedProject(null);
     
-    // Replace URL back to homepage without navigation
-    window.history.replaceState(
-      { ...window.history.state, as: '/', url: '/' }, 
-      '', 
-      '/'
-    );
+    // If direct access, wait for drawer animation to fully complete before navigation
+    if (isDirectAccess) {
+      setTimeout(() => {
+        router.push('/');
+        // Keep isClosing true for a longer period to prevent any reopening
+        setTimeout(() => {
+          setIsDirectAccess(false); // Reset direct access first
+          setIsClosing(false); // Then allow reopening
+        }, 500); // Increased from 100ms to 500ms
+      }, 600); // Increased from 400ms to 600ms
+    } else {
+      // For normal browsing just update URL
+      window.history.replaceState(
+        { ...window.history.state, as: '/', url: '/' }, 
+        '', 
+        '/'
+      );
+      // Reset closing state after animation completes
+      setTimeout(() => {
+        setIsClosing(false);
+      }, 600); // Increased from 400ms to 600ms
+    }
   };
 
   // Create an array of skeleton placeholders for loading state
@@ -153,13 +186,14 @@ export function ProjectsGrid({ projects, categories, loading, initialProjectSlug
           </>
         )}
         
-        {/* Project Drawer */}
+        {/* In ProjectsGrid.tsx where you render the drawer */}
         <ProjectDrawer
           selectedProject={selectedProject}
           setSelectedProject={handleProjectClose}
           projectImages={projectImages}
           setCurrentImageIndex={setCurrentImageIndex}
           setLightboxOpen={setLightboxOpen}
+          isClosing={isClosing} // Add this prop
         />
 
         {/* Lightbox Dialog */}
