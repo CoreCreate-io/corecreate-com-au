@@ -28,7 +28,7 @@ export async function getProjects() {
 }
 
 // Fetch categories for filtering
-async function getCategories() {
+export async function getCategories() {
   const categories = await client.fetch(`
     *[_type == "category"]{
       title

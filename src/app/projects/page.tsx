@@ -3,13 +3,6 @@ import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
 import { Container } from "@/components/layout/container";
 import { Metadata } from 'next';
 
-// Define the Props interface with params
-interface PageProps {
-  params: {
-    slug: string;
-  }
-}
-
 export const metadata: Metadata = {
   title: 'Our Projects | Core Create',
   description: 'Explore our portfolio of digital projects across web, brand, and video production.'
@@ -19,8 +12,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-static';
 export const revalidate = 3600; 
 
-// Add the params prop to your component
-export default async function ProjectsIndexPage({ params }: PageProps) {
+export default async function ProjectsIndexPage() {
   const projects = await getProjects();
   const categories = await getCategories();
   
@@ -45,7 +37,6 @@ export default async function ProjectsIndexPage({ params }: PageProps) {
         projects={projects} 
         categories={categories} 
         loading={false}
-        initialProjectSlug={params.slug} // Now params is defined
       />
     </main>
   );

@@ -55,6 +55,9 @@ export function ProjectsGrid({ projects, categories, loading, initialProjectSlug
   // Add state to track drawer closing animation
   const [isClosing, setIsClosing] = useState(false);
 
+  // Add this near the top of your component to track the original path
+  const [originalPath, setOriginalPath] = useState<string>('');
+
   // Check if user came directly to a project URL
   useEffect(() => {
     if (initialProjectSlug && !isClosing) {
@@ -89,6 +92,13 @@ export function ProjectsGrid({ projects, categories, loading, initialProjectSlug
     }
   }, [pathname, projects, selectedProject, setCurrentImageIndex, isClosing]);
 
+  // Add this effect to capture the original path when a project is selected
+  useEffect(() => {
+    if (selectedProject && !originalPath) {
+      setOriginalPath(pathname);
+    }
+  }, [selectedProject, pathname, originalPath]);
+
   // Handle project selection (regular browsing)
   const handleProjectSelect = (project: Project) => {
     // Update state first
@@ -117,24 +127,30 @@ export function ProjectsGrid({ projects, categories, loading, initialProjectSlug
     // If direct access, wait for drawer animation to fully complete before navigation
     if (isDirectAccess) {
       setTimeout(() => {
-        router.push('/');
-        // Keep isClosing true for a longer period to prevent any reopening
+        router.push('/projects'); // Always redirect to projects page for direct access
+        // Reset states after navigation
         setTimeout(() => {
-          setIsDirectAccess(false); // Reset direct access first
-          setIsClosing(false); // Then allow reopening
-        }, 500); // Increased from 100ms to 500ms
-      }, 600); // Increased from 400ms to 600ms
+          setIsDirectAccess(false);
+          setIsClosing(false);
+          setOriginalPath(''); // Reset original path
+        }, 500);
+      }, 600);
     } else {
-      // For normal browsing just update URL
+      // For normal browsing, check where we came from
+      const returnPath = originalPath.includes('/projects') ? '/projects' : '/';
+      
+      // Update URL without causing navigation using history API directly
       window.history.replaceState(
-        { ...window.history.state, as: '/', url: '/' }, 
+        { ...window.history.state, as: returnPath, url: returnPath }, 
         '', 
-        '/'
+        returnPath
       );
-      // Reset closing state after animation completes
+      
+      // Reset states after animation completes
       setTimeout(() => {
         setIsClosing(false);
-      }, 600); // Increased from 400ms to 600ms
+        setOriginalPath(''); // Reset original path
+      }, 600);
     }
   };
 
