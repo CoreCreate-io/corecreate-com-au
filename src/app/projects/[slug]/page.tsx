@@ -3,32 +3,37 @@ import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
 import { Container } from "@/components/layout/container";
 import { Metadata } from 'next';
 
-// Updated interface to match Next.js App Router expectations
-interface Props {
-  params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
-// Generate metadata for the project page
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+// Update metadata function to use Promise-based params
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  // Await the params Promise to get slug
+  const resolvedParams = await params;
+  
   return {
     title: 'Our Projects | Core Create',
     description: 'Explore our portfolio of digital projects across web, brand, and video production.'
   };
 }
 
-// Use static rendering with revalidation for better performance
 export const dynamic = 'force-static';
 export const revalidate = 3600; 
 
-// Renamed function to be consistent with Next.js naming convention
-export default async function Page({ params }: Props) {
+// Update the page component to match Sanity's pattern
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  // Await the params Promise to get slug
+  const resolvedParams = await params;
   const projects = await getProjects();
   const categories = await getCategories();
   
   return (
     <main className="min-h-screen pb-16">
-      {/* Hero Section */}
       <section className="py-16 md:py-24">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
@@ -42,12 +47,11 @@ export default async function Page({ params }: Props) {
         </Container>
       </section>
 
-      {/* Projects Grid */}
       <ProjectsGrid 
         projects={projects} 
         categories={categories} 
         loading={false}
-        initialProjectSlug={params.slug}
+        initialProjectSlug={resolvedParams.slug}
       />
     </main>
   );
