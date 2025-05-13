@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
-import { ProjectsGridProps, Project } from "./types";
+import { Project } from "./types";
 import { SearchFilters } from "./ui/SearchFilters";
 import { ProjectCard } from "./components/ProjectCard";
 import { ProjectSkeleton } from "./ui/ProjectSkeleton";
@@ -15,12 +15,12 @@ import { useLightbox } from "./hooks/useLightbox";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
 
-// Update ProjectsGrid.tsx props interface
+// Keep your local interface definition
 interface ProjectsGridProps {
   projects: Project[];
   categories: string[];
   loading: boolean;
-  initialProjectSlug?: string; // Add this prop
+  initialProjectSlug?: string;
 }
 
 export function ProjectsGrid({ projects, categories, loading, initialProjectSlug }: ProjectsGridProps) {
