@@ -9,12 +9,12 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { urlForImage } from "@/lib/image";
-import { Project, SanityImageWithCaption } from "../types";
+import { Project, SanityImage, SanityImageWithCaption } from "../types";
 
 interface ProjectDrawerProps {
   selectedProject: Project | null;
   setSelectedProject: (project: Project | null) => void;
-  projectImages: any[];
+  projectImages: Array<SanityImage | SanityImageWithCaption>; // Fixed: Replace 'any' with proper type
   setCurrentImageIndex: (index: number) => void;
   setLightboxOpen: (open: boolean) => void;
 }

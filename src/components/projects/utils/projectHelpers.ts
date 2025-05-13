@@ -1,4 +1,4 @@
-import { Project, SanityImage } from "../types";
+import { Project } from "../types"; // Fixed: Remove unused SanityImage import
 
 /**
  * Gets all images for a project, combining featured image and gallery

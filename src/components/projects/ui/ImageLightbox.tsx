@@ -4,13 +4,13 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { urlForImage } from "@/lib/image";
-import { Project } from "../types";
+import { Project, SanityImage, SanityImageWithCaption } from "../types";
 
 interface ImageLightboxProps {
   selectedProject: Project | null;
   lightboxOpen: boolean;
   setLightboxOpen: (open: boolean) => void;
-  projectImages: any[];
+  projectImages: Array<SanityImage | SanityImageWithCaption>; // Fixed: Replace 'any' with proper type
   currentImageIndex: number;
   nextImage: () => void;
   prevImage: () => void;
