@@ -1,6 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Project } from "./types";
+import { Project } from "../types";
 import { ProjectThumbnailCarousel } from "./ProjectThumbnailCarousel";
 
 interface ProjectCardProps {

@@ -6,6 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { urlForImage } from "@/lib/image";
 import { Project, SanityImage, SanityImageWithCaption } from "../types";
 
+
 interface ImageLightboxProps {
   selectedProject: Project | null;
   lightboxOpen: boolean;

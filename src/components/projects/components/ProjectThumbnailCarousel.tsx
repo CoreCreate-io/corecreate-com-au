@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { urlForImage } from "@/lib/image";
-import { Project } from "./types";
+import { Project } from "../types";
 
 export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   // Collect images first
