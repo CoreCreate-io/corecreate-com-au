@@ -12,8 +12,10 @@ import { ImageLightbox } from "./ui/ImageLightbox";
 import { useProjectFilter } from "./hooks/useProjectFilter";
 import { useLightbox } from "./hooks/useLightbox";
 import { getAllProjectImages } from "./utils/projectHelpers";
+import "./ProjectsOverride.css";
 
 export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProps) {
+  // Rest of the component stays the same
   // Project filtering
   const { 
     searchQuery, setSearchQuery, 

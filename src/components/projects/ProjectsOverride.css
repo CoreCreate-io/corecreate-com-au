@@ -1,0 +1,298 @@
+/* ===== LIGHTBOX OVERRIDES ===== */
+.cc-lightbox-dialog {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.cc-lightbox-content {
+  position: fixed !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: none !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: rgba(0, 0, 0, 0.95) !important;
+  overflow: hidden !important;
+  z-index: 9999 !important;
+  box-shadow: none !important;
+}
+
+.cc-lightbox-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: none !important;
+  touch-action: pan-y !important;
+}
+
+.cc-lightbox-info {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1.5rem;
+  z-index: 20;
+  color: white;
+}
+
+.cc-lightbox-image-wrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-lightbox-image {
+  object-fit: contain !important;
+}
+
+.cc-lightbox-close-btn {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.cc-lightbox-close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.cc-lightbox-navigation {
+  position: absolute;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 30;
+}
+
+.cc-lightbox-nav-btn {
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+.cc-lightbox-nav-btn:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.cc-lightbox-counter {
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+  padding: 0 0.75rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+/* ===== LIGHTBOX OVERRIDES ===== */
+
+/* Reset transform variables to override Tailwind's defaults */
+.cc-lightbox-content,
+.cc-lightbox-container {
+  --tw-translate-x: 0 !important;
+  --tw-translate-y: 0 !important;
+  --tw-translate-z: 0 !important;
+  --tw-scale-x: 1 !important;
+  --tw-scale-y: 1 !important;
+  --tw-scale-z: 1 !important;
+  --tw-rotate: 0 !important;
+  transform: none !important;
+  translate: none !important;
+  scale: none !important;
+  rotate: none !important;
+}
+
+/* Add super-specific override for translate property */
+div[role="dialog"].cc-lightbox-content,
+div[role="dialog"] .cc-lightbox-container {
+  transform: none !important;
+  translate: none !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  margin: 0 !important;
+}
+
+/* Override specifically the translate-x and translate-y classes */
+.translate-x-\[-50\%\].cc-lightbox-content,
+.translate-y-\[-50\%\].cc-lightbox-content,
+.cc-lightbox-content .translate-x-\[-50\%\],
+.cc-lightbox-content .translate-y-\[-50\%\] {
+  --tw-translate-x: 0 !important;
+  --tw-translate-y: 0 !important;
+  transform: none !important;
+  translate: none !important;
+}
+/* ===== DRAWER OVERRIDES ===== */
+
+:root {
+  --drawer-viewport-height: 100vh;
+  --drawer-initial-height: 75vh; /* Mobile initial smaller height */
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+}
+
+/* Mobile drawer - starts smaller, expands when scrolled */
+@media (max-width: 767px) {
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+    height: var(--drawer-initial-height) !important;
+    max-height: var(--drawer-viewport-height) !important;
+    margin-top: 0 !important;
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-top: var(--safe-area-inset-top);
+    transition: height 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  
+  /* When scrolled, expand to full height */
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"].fully-expanded {
+    height: var(--drawer-viewport-height) !important;
+  }
+}
+
+/* Desktop: Always use full height */
+@media (min-width: 768px) {
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+}
+
+/* Super-specific override targeting the exact Tailwind class causing the issue */
+.group\/drawer-content[data-vaul-drawer-direction="bottom"],
+[data-vaul-drawer-content][data-vaul-drawer-direction="bottom"].data-\[vaul-drawer-direction\=bottom\]\:max-h-\[80vh\] {
+  max-height: var(--drawer-viewport-height) !important; /* Allow full expansion */
+  margin-top: 0 !important;
+}
+
+/* Container for drawer content */
+.drawer-container-override {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Add this Safari-specific fix */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for Safari URL bar expanded state */
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+    position: fixed !important;
+    top: var(--drawer-offset-top) !important;
+    height: auto !important;
+    bottom: 0 !important;
+  }
+}
+
+/* Add this Safari-specific fix */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 767px) {
+    [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+      position: fixed !important;
+      top: var(--drawer-offset-top, 0px) !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: auto !important;
+      max-height: var(--drawer-viewport-height) !important;
+      bottom: 0 !important;
+      z-index: 1000 !important;
+      background: var(--background, #fff);
+    }
+  }
+}
+
+/* Safari/iOS fix: Drawer always flush with visible viewport top */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 767px) {
+    [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
+      position: fixed !important;
+      top: var(--drawer-offset-top, 0px) !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      height: auto !important;
+      max-height: var(--drawer-viewport-height) !important;
+      z-index: 1000 !important;
+      background: var(--background, #fff);
+      /* Remove any margin or padding that could push it down */
+      margin-top: 0 !important;
+      padding-top: env(safe-area-inset-top, 0px) !important;
+    }
+  }
+}
+
+/* Ensure the close button is always on top and not overlapping content */
+.drawer-container-override {
+  position: relative;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  padding-top: 3.5rem; /* Give space for the close button */
+}
+
+.drawer-close-fix {
+  position: fixed !important;
+  top: calc(var(--drawer-offset-top, 0px) + 1rem) !important;
+  right: 1rem !important;
+  z-index: 1100 !important;
+  background: none !important;
+}
+
+/* Force top/bottom drawers to always respect offset and viewport height */
+@media (max-width: 767px) {
+  /* For bottom drawers */
+  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"],
+  .group\/drawer-content[data-vaul-drawer-direction="bottom"] {
+    top: var(--drawer-offset-top, 0px) !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-top: 0 !important;
+    height: auto !important;
+    max-height: var(--drawer-viewport-height) !important;
+    border-radius: 0 !important;
+    /* Remove Tailwind's mt-24, max-h-[80vh], rounded-t-lg, border-t, etc. */
+  }
+  /* For top drawers */
+  [data-vaul-drawer-content][data-vaul-drawer-direction="top"],
+  .group\/drawer-content[data-vaul-drawer-direction="top"] {
+    top: var(--drawer-offset-top, 0px) !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-bottom: 0 !important;
+    height: auto !important;
+    max-height: var(--drawer-viewport-height) !important;
+    border-radius: 0 !important;
+    /* Remove Tailwind's mb-24, max-h-[80vh], rounded-b-lg, border-b, etc. */
+  }
+}
+
+
+/* Prevent Safari image save popup and improve mobile touch experience */
+.carousel-image-container {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  touch-action: manipulation;
+}
