@@ -3,24 +3,26 @@ import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
 import { Container } from "@/components/layout/container";
 import { Metadata } from 'next';
 
-// Define the Props interface with params
-interface PageProps {
-  params: {
-    slug: string;
-  }
+// Updated interface to match Next.js App Router expectations
+interface Props {
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export const metadata: Metadata = {
-  title: 'Our Projects | Core Create',
-  description: 'Explore our portfolio of digital projects across web, brand, and video production.'
-};
+// Generate metadata for the project page
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  return {
+    title: 'Our Projects | Core Create',
+    description: 'Explore our portfolio of digital projects across web, brand, and video production.'
+  };
+}
 
 // Use static rendering with revalidation for better performance
 export const dynamic = 'force-static';
 export const revalidate = 3600; 
 
-// Add the params prop to your component
-export default async function ProjectsIndexPage({ params }: PageProps) {
+// Renamed function to be consistent with Next.js naming convention
+export default async function Page({ params }: Props) {
   const projects = await getProjects();
   const categories = await getCategories();
   
@@ -45,7 +47,7 @@ export default async function ProjectsIndexPage({ params }: PageProps) {
         projects={projects} 
         categories={categories} 
         loading={false}
-        initialProjectSlug={params.slug} // Now params is defined
+        initialProjectSlug={params.slug}
       />
     </main>
   );
