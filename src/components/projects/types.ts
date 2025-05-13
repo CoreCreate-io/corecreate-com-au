@@ -15,7 +15,7 @@ export interface SanityImageWithCaption extends SanityImage {
 export interface Project {
   _id: string;
   title: string;
-  slug: { current: string };
+  slug?: { current: string };
   description?: string;
   featuredImage: SanityImage;
   featuredVideoEnabled?: boolean;

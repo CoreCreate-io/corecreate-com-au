@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { ProjectsGridProps, Project } from "./types";
@@ -14,8 +15,19 @@ import { useLightbox } from "./hooks/useLightbox";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
 
-export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProps) {
-  // Rest of the component stays the same
+// Update ProjectsGrid.tsx props interface
+interface ProjectsGridProps {
+  projects: Project[];
+  categories: string[];
+  loading: boolean;
+  initialProjectSlug?: string; // Add this prop
+}
+
+export function ProjectsGrid({ projects, categories, loading, initialProjectSlug }: ProjectsGridProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
   // Project filtering
   const { 
     searchQuery, setSearchQuery, 
@@ -36,6 +48,62 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
     nextImage, prevImage, handleKeyDown,
     handleLightboxTouchStart, handleLightboxTouchMove, touchStartX
   } = useLightbox(projectImages.length);
+
+  // Handle URL-based project selection - for direct links
+  useEffect(() => {
+    // Check if pathname includes '/projects/' - this would match /projects/[slug]
+    const pathSegments = pathname.split('/');
+    if (pathSegments.length >= 3 && pathSegments[1] === 'projects') {
+      const projectSlug = pathSegments[2];
+      
+      // Find the project with matching slug
+      const projectFromUrl = projects?.find(p => p.slug?.current === projectSlug);
+      if (projectFromUrl && !selectedProject) {
+        setSelectedProject(projectFromUrl);
+        setCurrentImageIndex(0);
+      }
+    }
+  }, [pathname, projects, selectedProject, setCurrentImageIndex]);
+
+  // Add this to handle initial project selection on direct URL visits
+  useEffect(() => {
+    if (initialProjectSlug && projects) {
+      const projectFromUrl = projects.find(p => p.slug?.current === initialProjectSlug);
+      if (projectFromUrl && !selectedProject) {
+        setSelectedProject(projectFromUrl);
+        setCurrentImageIndex(0);
+      }
+    }
+  }, [initialProjectSlug, projects]);
+
+  // Update handleProjectSelect with this smoother approach
+  const handleProjectSelect = (project: Project) => {
+    // Update state first
+    setSelectedProject(project);
+    setCurrentImageIndex(0);
+    
+    // Update URL without causing navigation using history API directly
+    if (project.slug?.current) {
+      const newUrl = `/projects/${project.slug.current}`;
+      window.history.replaceState(
+        { ...window.history.state, as: newUrl, url: newUrl }, 
+        '', 
+        newUrl
+      );
+    }
+  };
+
+  // Update handleProjectClose with direct history API
+  const handleProjectClose = () => {
+    setSelectedProject(null);
+    
+    // Replace URL back to homepage without navigation
+    window.history.replaceState(
+      { ...window.history.state, as: '/', url: '/' }, 
+      '', 
+      '/'
+    );
+  };
 
   // Create an array of skeleton placeholders for loading state
   const skeletons = Array.from({ length: 4 }).map((_, i) => <ProjectSkeleton key={`skeleton-${i}`} />);
@@ -77,10 +145,7 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
                   <ProjectCard 
                     key={project._id} 
                     project={project} 
-                    onClick={(project) => {
-                      setSelectedProject(project);
-                      setCurrentImageIndex(0);
-                    }} 
+                    onClick={handleProjectSelect} 
                   />
                 ))}
               </div>
@@ -91,7 +156,7 @@ export function ProjectsGrid({ projects, categories, loading }: ProjectsGridProp
         {/* Project Drawer */}
         <ProjectDrawer
           selectedProject={selectedProject}
-          setSelectedProject={setSelectedProject}
+          setSelectedProject={handleProjectClose}
           projectImages={projectImages}
           setCurrentImageIndex={setCurrentImageIndex}
           setLightboxOpen={setLightboxOpen}

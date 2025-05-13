@@ -57,6 +57,17 @@ export const ProjectDrawer = ({
     });
   }, [projectImages, selectedProject]);
   
+  // Add this to preload project images when drawer opens
+  useEffect(() => {
+    if (selectedProject && projectImages.length > 0) {
+      // Preload all images
+      projectImages.forEach((image, index) => {
+        const img = new window.Image();
+        img.src = urlForImage(image).url();
+      });
+    }
+  }, [selectedProject, projectImages]);
+  
   // Check if we're on mobile on mount and window resize
   useEffect(() => {
     const checkMobile = () => {
@@ -180,18 +191,27 @@ export const ProjectDrawer = ({
     };
   }, [selectedProject]);
 
-  // Helper function to get aspect ratio class based on orientation
-  const getAspectRatioClass = (imageKey: string) => {
+  // Helper function to get aspect ratio class and object fit based on orientation
+  const getImageStyles = (imageKey: string) => {
     const orientation = imageOrientations[imageKey] || 'unknown';
     
     if (orientation === 'portrait') {
-      return 'aspect-[4/5]'; // 4:5 for portrait
+      return {
+        aspect: 'aspect-[4/5]', // 4:5 for portrait
+        objectFit: 'object-cover' // Cover is fine for portrait
+      };
     } else if (orientation === 'landscape') {
-      return 'aspect-[16/9]'; // 16:9 for landscape
+      return {
+        aspect: 'aspect-auto', // Let the image determine its own height
+        objectFit: 'object-contain' // Contain ensures full image is visible
+      };
     }
     
     // Default while detecting or if unknown
-    return 'aspect-square'; 
+    return {
+      aspect: 'aspect-square',
+      objectFit: 'object-cover'
+    };
   };
 
   return (
@@ -245,7 +265,7 @@ export const ProjectDrawer = ({
             
             {/* Featured Video or Image */}
             {selectedProject?.featuredVideoEnabled && selectedProject.featuredVideo?.asset?.url ? (
-              <div className="mb-4">
+              <div className={`${isMobile ? 'mb-1' : 'mb-6'}`}>
                 <div className="relative w-full bg-black">
                   {/* No border-radius applied for videos */}
                   <video
@@ -261,23 +281,31 @@ export const ProjectDrawer = ({
                 </div>
               </div>
             ) : projectImages.length > 0 && (
-              <div className="mb-4">
+              <div className={`${isMobile ? 'mb-1' : 'mb-6'}`}>
                 <div 
-                  className="relative w-full"
+                  className="relative w-full cursor-pointer"
                   onClick={() => {
                     setCurrentImageIndex(0);
                     setLightboxOpen(true);
                   }}
                 >
-                  {/* Dynamic aspect ratio based on image orientation */}
-                  <div className={`relative ${getAspectRatioClass('img-0')}`}>
-                    <Image
-                      src={urlForImage(projectImages[0]).url()}
-                      alt={selectedProject?.title || "Project featured image"}
-                      fill
-                      className="object-cover cursor-pointer"
-                    />
-                  </div>
+                  {/* Dynamic styling based on image orientation */}
+                  {(() => {
+                    const styles = getImageStyles('img-0');
+                    return (
+                      <div className={`relative ${styles.aspect}`}>
+                        <Image
+                          src={urlForImage(projectImages[0]).url()}
+                          alt={selectedProject?.title || "Project featured image"}
+                          width={1200}
+                          height={800}
+                          className="w-full h-auto"
+                          sizes="100vw"
+                          priority
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -286,10 +314,12 @@ export const ProjectDrawer = ({
             {projectImages.length > 1 && (
               <div className={`${isMobile ? 'mb-0' : 'mb-8'}`}>
                 <div className={`flex flex-col ${isMobile ? 'space-y-0' : 'space-y-6'}`}>
-                  {projectImages.slice(1).map((image, index) => {
+                  {projectImages.slice(1).map((image, index, array) => {
                     // Use type assertion to tell TypeScript this might be a SanityImageWithCaption
                     const imageWithCaption = image as SanityImageWithCaption;
                     const imageKey = `img-${index + 1}`; // +1 because we've sliced off the first image
+                    const styles = getImageStyles(imageKey);
+                    const isLastImage = index === array.length - 1; // Check if this is the last image
                     
                     return (
                       <div 
@@ -301,16 +331,17 @@ export const ProjectDrawer = ({
                           setLightboxOpen(true);
                         }}
                       >
-                        {/* Dynamic aspect ratio based on image orientation */}
-                        <div className={`relative ${getAspectRatioClass(imageKey)}`}>
+                        {/* Dynamic aspect ratio based on image orientation - no mb-1 if it's the last image */}
+                        <div className={`relative ${styles.aspect} ${!isLastImage ? 'mb-1' : ''}`}>
                           <Image
                             src={urlForImage(image).url()}
                             alt={imageWithCaption.caption || `${selectedProject?.title} image ${index + 2}`}
-                            fill
-                            className="object-cover"
-                            ref={(el) => {
-                              imageRefs.current[imageKey] = el;
-                            }}
+                            width={1200}
+                            height={800}
+                            className="w-full h-auto"
+                            sizes="100vw"
+                            priority={index < 3} // Prioritize first few images
+                            loading={index < 3 ? "eager" : "lazy"}
                           />
                         </div>
                         
@@ -327,8 +358,6 @@ export const ProjectDrawer = ({
               </div>
             )}
             
-            {/* Add some bottom padding on mobile for better scrolling */}
-            {isMobile && <div className="h-16"></div>}
           </div>
         </div>
       </DrawerContent>

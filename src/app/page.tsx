@@ -3,9 +3,8 @@ import { client } from "@/sanity/lib/client";
 import { Container } from "@/components/layout/container";
 import "./globals.css";
 
-
-// Fetch projects with video data
-async function getProjects() {
+// Fetch projects with video data - make this reusable
+export async function getProjects() {
   return await client.fetch(`
     *[_type == "project"]{
       _id,
@@ -38,9 +37,14 @@ async function getCategories() {
   return ["Featured", ...categories.map((cat: { title: string }) => cat.title)];
 }
 
+// Add this to ensure content is fresh but not causing refreshes on every navigation
+export const dynamic = 'force-static';
+export const revalidate = 3600; // Revalidate content every hour
+
 export default async function ProjectsPage() {
   const projects = await getProjects();
   const categories = await getCategories();
+  
   return (
     <main className="min-h-screen pb-16">
       {/* Hero Section */}
