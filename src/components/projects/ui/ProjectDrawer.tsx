@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import Image from "next/image";
+import React, { useEffect, useState, useRef } from "react";
+import Image from "next/image"; // This import is shadowing the global Image constructor
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,14 @@ import { Project, SanityImage, SanityImageWithCaption } from "../types";
 interface ProjectDrawerProps {
   selectedProject: Project | null;
   setSelectedProject: (project: Project | null) => void;
-  projectImages: Array<SanityImage | SanityImageWithCaption>; // Fixed: Replace 'any' with proper type
+  projectImages: Array<SanityImage | SanityImageWithCaption>;
   setCurrentImageIndex: (index: number) => void;
   setLightboxOpen: (open: boolean) => void;
+}
+
+// Track image orientations
+interface ImageOrientations {
+  [key: string]: 'portrait' | 'landscape' | 'unknown';
 }
 
 export const ProjectDrawer = ({
@@ -26,6 +31,49 @@ export const ProjectDrawer = ({
   setCurrentImageIndex,
   setLightboxOpen
 }: ProjectDrawerProps) => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [imageOrientations, setImageOrientations] = useState<ImageOrientations>({});
+  const imageRefs = useRef<{[key: string]: HTMLImageElement | null}>({});
+  
+  // Detect image orientations for all project images
+  useEffect(() => {
+    if (!selectedProject || projectImages.length === 0) return;
+
+    // Pre-load images to detect dimensions
+    projectImages.forEach((image, index) => {
+      const imgKey = `img-${index}`;
+      // Use window.Image explicitly to avoid conflict with Next.js Image component
+      const img = new window.Image();
+      const imageUrl = urlForImage(image).url();
+      
+      img.onload = () => {
+        setImageOrientations(prev => ({
+          ...prev,
+          [imgKey]: img.height > img.width ? 'portrait' : 'landscape'
+        }));
+      };
+      
+      img.src = imageUrl;
+    });
+  }, [projectImages, selectedProject]);
+  
+  // Check if we're on mobile on mount and window resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkMobile();
+    
+    // Listen for window resize
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
   // Safari URL bar detection and handling
   useEffect(() => {
     if (!selectedProject) return;
@@ -84,20 +132,20 @@ export const ProjectDrawer = ({
     
     if (!drawerContent || !innerContent) return;
     
-    const isMobile = window.innerWidth < 768;
+    const isMobileSize = window.innerWidth < 768;
     
     // Function to update initial drawer height
     const updateInitialHeight = () => {
       const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       
       // Calculate initial height - 80% on mobile, 100% on desktop
-      const initialHeight = isMobile ? Math.round(vh * 0.8) : vh;
+      const initialHeight = isMobileSize ? Math.round(vh * 0.8) : vh;
       document.documentElement.style.setProperty('--drawer-initial-height', `${initialHeight}px`);
     };
     
     // Handle scroll to expand drawer when scrolling
     const handleScroll = () => {
-      if (!isMobile) return;
+      if (!isMobileSize) return;
       
       const scrollTop = (innerContent as HTMLElement).scrollTop;
       
@@ -132,6 +180,20 @@ export const ProjectDrawer = ({
     };
   }, [selectedProject]);
 
+  // Helper function to get aspect ratio class based on orientation
+  const getAspectRatioClass = (imageKey: string) => {
+    const orientation = imageOrientations[imageKey] || 'unknown';
+    
+    if (orientation === 'portrait') {
+      return 'aspect-[4/5]'; // 4:5 for portrait
+    } else if (orientation === 'landscape') {
+      return 'aspect-[16/9]'; // 16:9 for landscape
+    }
+    
+    // Default while detecting or if unknown
+    return 'aspect-square'; 
+  };
+
   return (
     <Drawer 
       open={selectedProject !== null} 
@@ -141,17 +203,20 @@ export const ProjectDrawer = ({
     >
       <DrawerContent className="drawer-override">
         <div className="mx-auto w-full max-w-[1440px] drawer-container-override">
-          <div className="overflow-y-auto p-6 sm:p-10">
-            {/* Close Button */}
-            <DrawerClose className="drawer-close-fix">
-              <Button variant="ghost" size="icon">
-                <X className="h-6 w-6" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </DrawerClose>
+          {/* Content area with adjusted padding based on screen size */}
+          <div className={`overflow-y-auto ${isMobile ? 'p-0' : 'p-6 sm:p-10'}`}>
+            {/* Close Button - moved inside to ensure visibility on mobile */}
+            <div className={`${isMobile ? 'absolute right-2 top-2 z-10' : ''}`}>
+              <DrawerClose className="drawer-close-fix">
+                <Button variant={isMobile ? "secondary" : "ghost"} size="icon">
+                  <X className="h-6 w-6" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DrawerClose>
+            </div>
             
-            {/* Project Header */}
-            <div className="mb-8">
+            {/* Project Header - add padding only on mobile */}
+            <div className={`mb-4 ${isMobile ? 'p-4' : ''}`}>
               <h2 className="text-3xl font-heading font-semibold">{selectedProject?.title}</h2>
               {selectedProject?.clientInfo?.clientName && (
                 <p className="text-xl text-muted-foreground mt-1">
@@ -170,9 +235,9 @@ export const ProjectDrawer = ({
               </div>
             </div>
             
-            {/* Project Description */}
+            {/* Project Description - add padding only on mobile */}
             {selectedProject?.description && (
-              <div className="mb-8">
+              <div className={`mb-4 ${isMobile ? 'px-4' : ''}`}>
                 <h3 className="text-xl font-medium mb-3">About this project</h3>
                 <p className="text-muted-foreground text-lg leading-relaxed">{selectedProject.description}</p>
               </div>
@@ -180,8 +245,9 @@ export const ProjectDrawer = ({
             
             {/* Featured Video or Image */}
             {selectedProject?.featuredVideoEnabled && selectedProject.featuredVideo?.asset?.url ? (
-              <div className="mb-8">
-                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+              <div className="mb-4">
+                <div className="relative w-full bg-black">
+                  {/* No border-radius applied for videos */}
                   <video
                     src={selectedProject.featuredVideo.asset.url}
                     autoPlay
@@ -195,50 +261,62 @@ export const ProjectDrawer = ({
                 </div>
               </div>
             ) : projectImages.length > 0 && (
-              <div className="mb-8">
-                <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                  <Image
-                    src={urlForImage(projectImages[0]).url()}
-                    alt={selectedProject?.title || "Project featured image"}
-                    fill
-                    className="object-cover cursor-pointer"
-                    onClick={() => {
-                      setCurrentImageIndex(0);
-                      setLightboxOpen(true);
-                    }}
-                  />
+              <div className="mb-4">
+                <div 
+                  className="relative w-full"
+                  onClick={() => {
+                    setCurrentImageIndex(0);
+                    setLightboxOpen(true);
+                  }}
+                >
+                  {/* Dynamic aspect ratio based on image orientation */}
+                  <div className={`relative ${getAspectRatioClass('img-0')}`}>
+                    <Image
+                      src={urlForImage(projectImages[0]).url()}
+                      alt={selectedProject?.title || "Project featured image"}
+                      fill
+                      className="object-cover cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
             )}
             
             {/* Image Gallery - Skip first image if it's the same as featured image */}
             {projectImages.length > 1 && (
-              <div className="mb-8">
-                <div className="flex flex-col space-y-6">
+              <div className={`${isMobile ? 'mb-0' : 'mb-8'}`}>
+                <div className={`flex flex-col ${isMobile ? 'space-y-0' : 'space-y-6'}`}>
                   {projectImages.slice(1).map((image, index) => {
                     // Use type assertion to tell TypeScript this might be a SanityImageWithCaption
                     const imageWithCaption = image as SanityImageWithCaption;
+                    const imageKey = `img-${index + 1}`; // +1 because we've sliced off the first image
                     
                     return (
                       <div 
                         key={index}
-                        className="relative cursor-pointer rounded-md overflow-hidden"
+                        className="relative cursor-pointer"
                         onClick={() => {
                           // Add 1 to index because we're skipping the first image
                           setCurrentImageIndex(index + 1);
                           setLightboxOpen(true);
                         }}
                       >
-                        <div className="aspect-video relative">
+                        {/* Dynamic aspect ratio based on image orientation */}
+                        <div className={`relative ${getAspectRatioClass(imageKey)}`}>
                           <Image
                             src={urlForImage(image).url()}
                             alt={imageWithCaption.caption || `${selectedProject?.title} image ${index + 2}`}
                             fill
                             className="object-cover"
+                            ref={(el) => {
+                              imageRefs.current[imageKey] = el;
+                            }}
                           />
                         </div>
+                        
+                        {/* Caption with padding only on desktop or if mobile */}
                         {imageWithCaption.caption && (
-                          <p className="text-sm text-muted-foreground mt-1 px-2 pb-2">
+                          <p className={`text-sm text-muted-foreground mt-1 ${isMobile ? 'px-4 pb-2' : 'px-0 pb-0'}`}>
                             {imageWithCaption.caption}
                           </p>
                         )}
@@ -248,6 +326,9 @@ export const ProjectDrawer = ({
                 </div>
               </div>
             )}
+            
+            {/* Add some bottom padding on mobile for better scrolling */}
+            {isMobile && <div className="h-16"></div>}
           </div>
         </div>
       </DrawerContent>
