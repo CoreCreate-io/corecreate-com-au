@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "update-schema": "node src/scripts/generate-schema-index.js",
+    "dev": "npm run update-schema && next dev",
+    "build": "npm run update-schema && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -36,6 +37,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.3",
+    "react-icons": "^5.5.0",
     "react-intersection-observer": "^9.16.0",
     "react-is": "^19.1.0",
     "sanity": "^3.88.2",
