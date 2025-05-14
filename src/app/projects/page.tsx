@@ -1,4 +1,4 @@
-import { getProjects, getCategories } from "@/app/page";
+import { getProjects, getCategories } from "@/sanity/lib/queries";
 import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
 import { Container } from "@/components/layout/container";
 import { Metadata } from 'next';
