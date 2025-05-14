@@ -297,3 +297,33 @@ div[role="dialog"] .cc-lightbox-container {
   touch-action: manipulation;
 }
 
+.filter-container {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  padding-bottom: 4px;
+}
+
+.filter-item {
+  flex: 0 0 auto;
+  min-width: 80px;
+  width: auto;
+  margin-right: 0;
+}
+
+.filter-item > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto; /* Allow width to be determined by content */
+  min-height: 46px; /* Min height instead of fixed height */
+  height: auto; /* Let height adapt to content if needed */
+}
+
+.filter-item h3 {
+  white-space: nowrap;
+  padding: 0 12px; /* Horizontal padding */
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
