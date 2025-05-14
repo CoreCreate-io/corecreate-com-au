@@ -33,7 +33,7 @@ export const SearchFilters = ({
     setShowFilters(!showFilters);
   };
 
-  // Add a debugging click handler
+  // Handle category click
   const handleCategoryClick = (categorySlug: string) => {
     console.log('Clicked category slug:', categorySlug);
     setActiveCategory(categorySlug || '');
@@ -82,39 +82,48 @@ export const SearchFilters = ({
             // Scrollable category filters
             <ScrollArea className="w-full pb-4">
               <div className="flex space-x-4 lg:grid lg:grid-cols-6 lg:gap-4">
-                {categories.map((category) => (
-                  <div 
-                    key={category._id}
-                    className={`relative overflow-hidden rounded-xl cursor-pointer transition-all flex-shrink-0 w-[150px] lg:w-full
-                      ${activeCategory === category.slug?.current ? 'ring-2 ring-primary ring-offset-2' : 'ring-0'}
-                      hover:shadow-lg`}
-                    onClick={() => handleCategoryClick(category.slug?.current || '')}
-                  >
-                    {/* Background image - Reduced height */}
-                    <div className="w-full h-20 bg-gray-200 relative">
-                      {category.featuredImage ? (
-                        <Image
-                          src={urlForImage(category.featuredImage).url()}
-                          alt={category.title}
-                          fill
-                          sizes="(max-width: 768px) 150px, 200px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        // Fallback gradient background if no image
-                        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900" />
-                      )}
-                      
-                      {/* Dark overlay */}
-                      <div className={`absolute inset-0 ${category.overlayColor || 'bg-blue-900/60'}`}></div>
-                      
-                      {/* Category name */}
-                      <div className="absolute inset-0 flex items-center justify-center p-2 text-center">
-                        <h3 className="text-white font-medium text-sm">{category.title}</h3>
+                {categories.map((category) => {
+                  const isActive = activeCategory === category.slug?.current;
+                  return (
+                    <div 
+                      key={category._id}
+                      className={`relative overflow-hidden rounded-xl cursor-pointer transition-all flex-shrink-0 w-[150px] lg:w-full hover:shadow-lg`}
+                      onClick={() => handleCategoryClick(category.slug?.current || '')}
+                    >
+                      {/* Background image - Reduced height */}
+                      <div className="w-full h-20 bg-gray-200 relative">
+                        {category.featuredImage ? (
+                          <Image
+                            src={urlForImage(category.featuredImage).url()}
+                            alt={category.title}
+                            fill
+                            sizes="(max-width: 768px) 150px, 200px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          // Fallback gradient background if no image
+                          <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900" />
+                        )}
+                        
+                        {/* Dark overlay - black for inactive, lime green for active */}
+                        <div className={`absolute inset-0 transition-colors duration-200 ${
+                          isActive 
+                            ? 'bg-[#BAFF00]/80' // Lime green at 80% opacity for active
+                            : 'bg-black/70' // Dark black overlay for inactive
+                        }`}></div>
+                        
+                        {/* Category name */}
+                        <div className="absolute inset-0 flex items-center justify-center p-2 text-center">
+                          <h3 className={`font-medium text-sm ${
+                            isActive ? 'text-black' : 'text-white'
+                          }`}>
+                            {category.title}
+                          </h3>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <ScrollBar orientation="horizontal" className="lg:hidden" />
             </ScrollArea>

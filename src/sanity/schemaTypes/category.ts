@@ -53,6 +53,17 @@ export default defineType({
       validation: Rule => Rule.required(),
       group: 'basic',
     }),
+        // Add the featured image field for category filter display
+    defineField({
+      name: 'featuredImage',
+      title: 'Featured Image',
+      description: 'Image to display on category filter buttons',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      group: 'appearance',
+    }),
     defineField({
       name: 'description',
       title: 'Description',
@@ -86,35 +97,6 @@ export default defineType({
       type: 'image',
       options: {
         hotspot: true,
-      },
-      group: 'appearance',
-    }),
-    // Add the featured image field for category filter display
-    defineField({
-      name: 'featuredImage',
-      title: 'Featured Image',
-      description: 'Image to display on category filter buttons',
-      type: 'image',
-      options: {
-        hotspot: true,
-      },
-      group: 'appearance',
-    }),
-    // Add a color field for overlay on category images
-    defineField({
-      name: 'overlayColor',
-      title: 'Overlay Color',
-      description: 'Color to overlay on the featured image',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Default (Dark Blue)', value: 'bg-blue-900/60' },
-          { title: 'Teal', value: 'bg-teal-900/60' }, 
-          { title: 'Purple', value: 'bg-purple-900/60' },
-          { title: 'Orange', value: 'bg-orange-900/60' },
-          { title: 'Red', value: 'bg-red-900/60' },
-          { title: 'Green', value: 'bg-green-900/60' },
-        ]
       },
       group: 'appearance',
     }),
