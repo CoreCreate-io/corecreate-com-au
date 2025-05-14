@@ -18,6 +18,7 @@ interface SearchFiltersProps {
   loading: boolean;
 }
 
+
 export function SearchFilters({
   searchQuery,
   setSearchQuery,

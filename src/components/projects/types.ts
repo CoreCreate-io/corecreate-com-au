@@ -53,9 +53,11 @@ export interface ProjectsGridProps {
 export interface Category {
   _id: string;
   title: string;
-  slug: { current: string };
+  slug?: { current: string };
   description?: string;
   featuredImage?: SanityImage;
   overlayColor?: string;
   icon?: SanityImage;
+  // Add this line:
+  categoryType?: 'creativeField' | 'sector' | 'subCategory' | 'featured';
 }
