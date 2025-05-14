@@ -155,7 +155,7 @@ defineField({
       type: 'reference',
       to: [{ type: 'category' }],
       options: {
-        filter: 'categoryType == "field"',
+        filter: 'categoryType == "creativeField"', // CHANGE THIS from "field" to "creativeField"
       },
       validation: Rule => Rule.required(),
       group: 'categories',
@@ -166,7 +166,7 @@ defineField({
       type: 'reference',
       to: [{ type: 'category' }],
       options: {
-        filter: 'categoryType == "sector"',
+        filter: 'categoryType == "sector"', // This is already correct
       },
       validation: Rule => Rule.required(),
       group: 'categories',
@@ -192,7 +192,7 @@ defineField({
           type: 'reference',
           to: [{ type: 'category' }],
           options: {
-            filter: 'categoryType == "subCategory"'
+            filter: 'categoryType == "subCategory"' // This is already correct
           }
         }
       ],
