@@ -11,7 +11,7 @@ import { ProjectDrawer } from "./ui/ProjectDrawer";
 import { ImageLightbox } from "./ui/ImageLightbox";
 import { useProjectFilter } from "./hooks/useProjectFilter";
 import { useLightbox } from "./hooks/useLightbox";
-import { useProjectNavigation } from "./hooks/useProjectNavigation.ts";
+import { useProjectNavigation } from "./hooks/useProjectNavigation";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
 
