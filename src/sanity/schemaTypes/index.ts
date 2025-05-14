@@ -6,13 +6,14 @@ import category from './category'
 // Automatically import all page schemas
 import aboutPage from './pages/aboutPage'
 import homePage from './pages/homePage'
+import testPage from './pages/testPage'
 
 // For Sanity v3 schema configuration
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
     project, 
     category,
-    aboutPage, homePage
+    aboutPage, homePage, testPage
   ],
 }
 
@@ -20,5 +21,5 @@ export const schema: { types: SchemaTypeDefinition[] } = {
 export const schemaTypes = [
   project,
   category,
-  aboutPage, homePage
+  aboutPage, homePage, testPage
 ]
