@@ -4,8 +4,7 @@ export default defineType({
   name: 'homePage',
   title: 'Home Page',
   type: 'document',
-  // This prevents creating multiple instances of the same page
-  __experimental_actions: [/*'create',*/ 'update', /*'delete',*/ 'publish'],
+  // Better type assertion
   groups: [
     { name: 'hero', title: 'Hero Section' },
     { name: 'featured', title: 'Featured Projects' },

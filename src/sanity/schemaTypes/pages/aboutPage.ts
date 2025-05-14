@@ -4,8 +4,6 @@ export default defineType({
   name: 'aboutPage',
   title: 'About Page',
   type: 'document',
-  // Prevent creating multiple instances
-  __experimental_actions: ['update', 'publish'],
   groups: [
     { name: 'intro', title: 'Introduction' },
     { name: 'story', title: 'Our Story' },

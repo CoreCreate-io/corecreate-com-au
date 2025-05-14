@@ -7,7 +7,9 @@
 import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
-import { pageManagerPlugin, structure } from './src/sanity/schemaTypes/pagemanager/PageManager'
+import { pageManagerPlugin, structure } from './src/sanity/plugins/PageManager'
+// Import the singleton plugin
+import { singletonPlugin } from './src/sanity/plugins/singletonPlugin'
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import {apiVersion, dataset, projectId} from './src/sanity/env'
@@ -25,6 +27,9 @@ export default defineConfig({
     
     // Add the pageManagerPlugin for document actions
     pageManagerPlugin(),
+    
+    // Add the singleton plugin here
+    singletonPlugin(),
     
     visionTool({defaultApiVersion: apiVersion}),
   ],
