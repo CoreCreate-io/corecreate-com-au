@@ -44,4 +44,5 @@ export interface ProjectsGridProps {
   projects: Project[];
   categories: string[];
   loading: boolean;
+  initialProjectSlug?: string;
 }
