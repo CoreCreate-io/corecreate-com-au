@@ -47,10 +47,14 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
         {/* Tags */}
         <div className="mt-2 flex flex-wrap gap-2">
           {project.projectField && (
-            <Badge variant="outline" className="bg-background/80">{project.projectField.title}</Badge>
+            <Badge variant="outline" className="bg-background/80">
+              {project.projectField.title || project.projectField.slug?.current || 'Unknown'}
+            </Badge>
           )}
           {project.projectSector && (
-            <Badge variant="outline" className="bg-background/80">{project.projectSector.title}</Badge>
+            <Badge variant="outline" className="bg-background/80">
+              {project.projectSector.title || project.projectSector.slug?.current || 'Unknown'}
+            </Badge>
           )}
         </div>
       </div>

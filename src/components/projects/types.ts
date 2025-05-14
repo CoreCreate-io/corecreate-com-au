@@ -31,8 +31,8 @@ export interface Project {
     display?: 'stacked' | 'grid' | 'carousel' | 'masonry';
     zoom?: boolean;
   };
-  projectField?: { _ref: string; slug?: { current: string } };
-  projectSector?: { _ref: string; slug?: { current: string } };
+  projectField?: { _ref: string; slug?: { current: string }; title?: string };
+  projectSector?: { _ref: string; slug?: { current: string }; title?: string };
   customTags?: string[];
   clientInfo?: { 
     clientName?: string;
