@@ -176,9 +176,23 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
 
   // Return single image if only one exists
   if (projectImages.length <= 1) {
+    // Instead of directly using featuredImage (which might be undefined),
+    // use the first image from projectImages array which is guaranteed to exist
+    const imageToShow = projectImages[0];
+    
+    // Check if we have an image to display
+    if (!imageToShow) {
+      // Fallback if somehow there are no images
+      return (
+        <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+          <p className="text-gray-500">No image</p>
+        </div>
+      );
+    }
+    
     return (
       <Image
-        src={urlForImage(project.featuredImage).url()}
+        src={urlForImage(imageToShow).url()}
         alt={project.title}
         fill
         priority={false}
