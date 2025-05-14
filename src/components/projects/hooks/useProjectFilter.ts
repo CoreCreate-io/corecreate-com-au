@@ -1,74 +1,97 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Project, Category } from '../types';
 
-export function useProjectFilter(projects: Project[], categories: Category[]) {
+// Ensure we always have the featured category
+const DEFAULT_CATEGORIES: Category[] = [
+  { 
+    _id: 'featured',
+    title: 'Featured',
+    slug: { current: 'featured' }
+  }
+];
+
+export function useProjectFilter(projects: Project[] = [], categories: Category[] = []) {
+  // Ensure we always have at least the featured category
+  const allCategories = useMemo(() => {
+    if (!categories || categories.length === 0) {
+      console.log('No categories provided, using defaults');
+      return DEFAULT_CATEGORIES;
+    }
+    
+    // Check if featured is already included
+    const hasFeatured = categories.some(c => c.slug?.current === 'featured');
+    
+    if (!hasFeatured) {
+      return [DEFAULT_CATEGORIES[0], ...categories];
+    }
+    
+    return categories;
+  }, [categories]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('featured');
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Active category:', activeCategory);
+    console.log('Categories available:', allCategories.length);
+  }, [activeCategory, allCategories]);
+
   // Filter projects based on search query and category
   const filteredProjects = useMemo(() => {
-    if (!projects) return [];
+    if (!projects || !projects.length) return [];
+    
     let filtered = [...projects];
-
+    
     // Special case for featured
     if (activeCategory === 'featured') {
       filtered = filtered.filter(project => project.featured === true);
+      console.log('Featured projects count:', filtered.length);
+      return filtered;
     } 
-    // Filter by other categories
-    else {
-      filtered = filtered.filter(project => {
-        // Find the selected category object
-        const selectedCategory = categories.find(c => c.slug?.current === activeCategory);
-        if (!selectedCategory) return false;
+    
+    // Only proceed with category filtering if we have valid categories
+    if (allCategories.length > 0) {
+      const selectedCategory = allCategories.find(c => c?.slug?.current === activeCategory);
+      
+      if (selectedCategory) {
+        console.log('Filtering by category:', selectedCategory.title);
         
-        // FIXED: Check if project field title matches selected category title
-        const fieldMatches = project.projectField?.title === selectedCategory.title;
-        
-        // FIXED: Check if project sector title matches selected category title
-        const sectorMatches = project.projectSector?.title === selectedCategory.title;
-        
-        return fieldMatches || sectorMatches;
-      });
+        filtered = filtered.filter(project => {
+          const fieldMatch = project.projectField?.title === selectedCategory.title;
+          const sectorMatch = project.projectSector?.title === selectedCategory.title;
+          return fieldMatch || sectorMatch;
+        });
+      }
     }
-
-    // Filter by search query if provided
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(project => {
-        // Check project title and description
-        const titleMatches = project.title?.toLowerCase().includes(query) || false;
-        const descMatches = project.description?.toLowerCase().includes(query) || false;
-        
-        // FIXED: Check field category by title directly
-        const fieldMatches = project.projectField?.title?.toLowerCase().includes(query) || false;
-        
-        // FIXED: Check sector category by title directly
-        const sectorMatches = project.projectSector?.title?.toLowerCase().includes(query) || false;
-        
-        // Check custom tags
-        const tagMatches = project.customTags?.some(tag => 
-          tag.toLowerCase().includes(query)
-        ) || false;
-        
-        return titleMatches || descMatches || fieldMatches || sectorMatches || tagMatches;
-      });
-    }
-
+    
     return filtered;
-  }, [projects, searchQuery, activeCategory, categories]);
+  }, [projects, activeCategory, allCategories]);
 
-  // Reset filters
-  const clearFilters = () => {
-    setSearchQuery('');
-    setActiveCategory('featured');
-  };
+  // Search filtering
+  const searchFilteredProjects = useMemo(() => {
+    if (!searchQuery) return filteredProjects;
+    
+    const query = searchQuery.toLowerCase();
+    return filteredProjects.filter(project => {
+      const titleMatch = project.title?.toLowerCase().includes(query);
+      const descMatch = project.description?.toLowerCase().includes(query);
+      const fieldMatch = project.projectField?.title?.toLowerCase().includes(query);
+      const sectorMatch = project.projectSector?.title?.toLowerCase().includes(query);
+      
+      return titleMatch || descMatch || fieldMatch || sectorMatch;
+    });
+  }, [filteredProjects, searchQuery]);
 
   return {
     searchQuery,
     setSearchQuery,
     activeCategory,
     setActiveCategory,
-    filteredProjects,
-    clearFilters
+    filteredProjects: searchFilteredProjects,
+    clearFilters: () => {
+      setSearchQuery('');
+      setActiveCategory('featured');
+    }
   };
 }

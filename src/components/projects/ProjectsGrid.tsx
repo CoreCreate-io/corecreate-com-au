@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
-import { Project } from "./types";
+import { Project, Category } from "./types";
 import { SearchFilters } from "./ui/SearchFilters";
 import { ProjectCard } from "./components/ProjectCard";
 import { ProjectSkeleton } from "./ui/ProjectSkeleton";
@@ -15,22 +15,36 @@ import { useProjectNavigation } from "./hooks/useProjectNavigation";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
 
-// Update the ProjectsGridProps interface
 interface ProjectsGridProps {
   projects: Project[];
-  categories: Category[]; // Changed from string[] to Category[]
+  categories: Category[];
   loading: boolean;
   initialProjectSlug?: string;
 }
 
-export function ProjectsGrid({ projects, categories, loading, initialProjectSlug }: ProjectsGridProps) {
-  // Project filtering
-  // Make sure to modify useProjectFilter to work with Category objects instead of strings
+export function ProjectsGrid({ projects = [], categories = [], loading, initialProjectSlug }: ProjectsGridProps) {
+  // Add debugging for categories
+  useEffect(() => {
+    console.log("ProjectsGrid received categories:", categories);
+  }, [categories]);
+
+  // Only initialize filter when data is available
   const { 
     searchQuery, setSearchQuery, 
     activeCategory, setActiveCategory,
     filteredProjects, clearFilters 
-  } = useProjectFilter(projects, categories);
+  } = useProjectFilter(
+    projects, 
+    // Ensure we always have the featured category at minimum
+    [
+      { 
+        _id: 'featured', 
+        title: 'Featured', 
+        slug: { current: 'featured' } 
+      },
+      ...categories
+    ]
+  );
   
   // Project navigation and URL handling
   const {

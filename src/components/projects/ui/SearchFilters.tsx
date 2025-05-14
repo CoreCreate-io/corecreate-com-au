@@ -18,14 +18,14 @@ interface SearchFiltersProps {
   loading: boolean;
 }
 
-export const SearchFilters = ({
+export function SearchFilters({
   searchQuery,
   setSearchQuery,
   activeCategory,
   setActiveCategory,
   categories,
   loading
-}: SearchFiltersProps) => {
+}: SearchFiltersProps) {
   const [showFilters, setShowFilters] = useState(true);
 
   // Handle filter toggle
@@ -70,53 +70,51 @@ export const SearchFilters = ({
       
       {/* Category Filters */}
       {showFilters && (
-        <div className="mt-6">
+        <div className="mt-4 filter-grid-override">
           {loading ? (
             // Skeleton for category filters
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="filter-container grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={`cat-skeleton-${i}`} className="h-20 w-full rounded-xl" />
+                <Skeleton key={`cat-skeleton-${i}`} className="filter-item h-14 w-full rounded-lg" />
               ))}
             </div>
           ) : (
             // Scrollable category filters
-            <ScrollArea className="w-full pb-4">
-              <div className="flex space-x-4 lg:grid lg:grid-cols-6 lg:gap-4">
+            <ScrollArea className="w-full pb-2">
+              <div className="filter-container flex space-x-2 lg:grid lg:grid-cols-6 lg:gap-2">
                 {categories.map((category) => {
                   const isActive = activeCategory === category.slug?.current;
                   return (
                     <div 
                       key={category._id}
-                      className={`relative overflow-hidden rounded-xl cursor-pointer transition-all flex-shrink-0 w-[150px] lg:w-full hover:shadow-lg`}
+                      className="filter-item filter-item-mobile lg:filter-item-desktop relative overflow-hidden rounded-lg cursor-pointer 
+                        transition-all flex-shrink-0 w-[100px] lg:w-full hover:shadow-lg"
                       onClick={() => handleCategoryClick(category.slug?.current || '')}
                     >
                       {/* Background image - Reduced height */}
-                      <div className="w-full h-20 bg-gray-200 relative">
+                      <div className="w-full h-14 bg-gray-200 relative">
                         {category.featuredImage ? (
                           <Image
                             src={urlForImage(category.featuredImage).url()}
                             alt={category.title}
                             fill
-                            sizes="(max-width: 768px) 150px, 200px"
+                            sizes="(max-width: 768px) 100px, 150px"
                             className="object-cover"
                           />
                         ) : (
-                          // Fallback gradient background if no image
                           <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900" />
                         )}
                         
-                        {/* Dark overlay - black for inactive, lime green for active */}
+                        {/* Dark overlay */}
                         <div className={`absolute inset-0 transition-colors duration-200 ${
                           isActive 
-                            ? 'bg-[#BAFF00]/80' // Lime green at 80% opacity for active
-                            : 'bg-black/70' // Dark black overlay for inactive
+                            ? 'bg-[#BAFF00]/80'
+                            : 'bg-black/70'
                         }`}></div>
                         
                         {/* Category name */}
-                        <div className="absolute inset-0 flex items-center justify-center p-2 text-center">
-                          <h3 className={`font-medium text-sm ${
-                            isActive ? 'text-black' : 'text-white'
-                          }`}>
+                        <div className="absolute inset-0 flex items-center justify-center p-1 text-center">
+                          <h3 className={`font-medium text-xs ${isActive ? 'text-black' : 'text-white'}`}>
                             {category.title}
                           </h3>
                         </div>
@@ -132,4 +130,4 @@ export const SearchFilters = ({
       )}
     </Container>
   );
-};
+}
