@@ -145,38 +145,6 @@ div[role="dialog"] .cc-lightbox-container {
 }
 /* ===== DRAWER OVERRIDES ===== */
 
-:root {
-  --drawer-viewport-height: 100vh;
-  --drawer-initial-height: 75vh; /* Mobile initial smaller height */
-  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-inset-top: env(safe-area-inset-top, 0px);
-}
-
-/* Mobile drawer - starts smaller, expands when scrolled */
-@media (max-width: 767px) {
-  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
-    height: var(--drawer-initial-height) !important;
-    max-height: var(--drawer-viewport-height) !important;
-    margin-top: 0 !important;
-    padding-bottom: var(--safe-area-inset-bottom);
-    padding-top: var(--safe-area-inset-top);
-    transition: height 0.3s cubic-bezier(.4,0,.2,1);
-  }
-  
-  /* When scrolled, expand to full height */
-  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"].fully-expanded {
-    height: var(--drawer-viewport-height) !important;
-  }
-}
-
-/* Desktop: Always use full height */
-@media (min-width: 768px) {
-  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
-    height: 100vh !important;
-    max-height: 100vh !important;
-  }
-}
-
 /* Super-specific override targeting the exact Tailwind class causing the issue */
 .group\/drawer-content[data-vaul-drawer-direction="bottom"],
 [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"].data-\[vaul-drawer-direction\=bottom\]\:max-h-\[80vh\] {
@@ -184,61 +152,6 @@ div[role="dialog"] .cc-lightbox-container {
   margin-top: 0 !important;
 }
 
-/* Container for drawer content */
-.drawer-container-override {
-  height: 100% !important;
-  max-height: 100% !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Add this Safari-specific fix */
-@supports (-webkit-touch-callout: none) {
-  /* Fix for Safari URL bar expanded state */
-  [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
-    position: fixed !important;
-    top: var(--drawer-offset-top) !important;
-    height: auto !important;
-    bottom: 0 !important;
-  }
-}
-
-/* Add this Safari-specific fix */
-@supports (-webkit-touch-callout: none) {
-  @media (max-width: 767px) {
-    [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
-      position: fixed !important;
-      top: var(--drawer-offset-top, 0px) !important;
-      left: 0 !important;
-      right: 0 !important;
-      height: auto !important;
-      max-height: var(--drawer-viewport-height) !important;
-      bottom: 0 !important;
-      z-index: 1000 !important;
-      background: var(--background, #fff);
-    }
-  }
-}
-
-/* Safari/iOS fix: Drawer always flush with visible viewport top */
-@supports (-webkit-touch-callout: none) {
-  @media (max-width: 767px) {
-    [data-vaul-drawer-content][data-vaul-drawer-direction="bottom"] {
-      position: fixed !important;
-      top: var(--drawer-offset-top, 0px) !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      height: auto !important;
-      max-height: var(--drawer-viewport-height) !important;
-      z-index: 1000 !important;
-      background: var(--background, #fff);
-      /* Remove any margin or padding that could push it down */
-      margin-top: 0 !important;
-      padding-top: env(safe-area-inset-top, 0px) !important;
-    }
-  }
-}
 
 /* Ensure the close button is always on top and not overlapping content */
 .drawer-container-override {
@@ -250,12 +163,26 @@ div[role="dialog"] .cc-lightbox-container {
   padding-top: 3.5rem; /* Give space for the close button */
 }
 
+/* Enhanced close button fix for Safari mobile */
 .drawer-close-fix {
   position: fixed !important;
-  top: calc(var(--drawer-offset-top, 0px) + 1rem) !important;
+  top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
   right: 1rem !important;
-  z-index: 1100 !important;
+  z-index: 9999 !important; /* Much higher z-index */
   background: none !important;
+  /* Safari-specific fixes */
+  transform: translateZ(0) !important; /* Force GPU acceleration */
+  -webkit-transform: translateZ(0) !important;
+  will-change: transform !important; /* Hint to browser */
+}
+
+/* Safari-specific override */
+@supports (-webkit-touch-callout: none) {
+  .drawer-close-fix {
+    position: fixed !important; /* Try absolute instead of fixed on Safari */
+    top: calc(env(safe-area-inset-top, 0px) + 2.5rem) !important;
+    right: 1rem !important;
+  }
 }
 
 /* Force top/bottom drawers to always respect offset and viewport height */
@@ -287,7 +214,6 @@ div[role="dialog"] .cc-lightbox-container {
     /* Remove Tailwind's mb-24, max-h-[80vh], rounded-b-lg, border-b, etc. */
   }
 }
-
 
 /* Prevent Safari image save popup and improve mobile touch experience */
 .carousel-image-container {
