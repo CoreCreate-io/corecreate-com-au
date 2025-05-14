@@ -11,22 +11,40 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export function useProjectFilter(projects: Project[] = [], categories: Category[] = []) {
-  // Ensure we always have at least the featured category
-  const allCategories = useMemo(() => {
-    if (!categories || categories.length === 0) {
-      console.log('No categories provided, using defaults');
-      return DEFAULT_CATEGORIES;
-    }
+  // NEW: Calculate which categories have projects
+  const nonEmptyCategories = useMemo(() => {
+    if (!projects || !projects.length) return DEFAULT_CATEGORIES;
     
-    // Check if featured is already included
-    const hasFeatured = categories.some(c => c.slug?.current === 'featured');
+    const categoriesWithProjects = categories.filter(category => {
+      // Skip processing the 'featured' category since it's handled differently
+      if (category.slug?.current === 'featured') return true;
+      
+      // Check if there's at least one project associated with this category
+      return projects.some(project => {
+        // For main creative fields
+        if (project.projectField?.title === category.title) return true;
+        
+        // For sectors
+        if (project.projectSector?.title === category.title) return true;
+        
+        // For subcategories (if present)
+        if (project.subCategories?.some(subCat => subCat.title === category.title)) return true;
+        
+        return false;
+      });
+    });
     
-    if (!hasFeatured) {
-      return [DEFAULT_CATEGORIES[0], ...categories];
-    }
+    // Ensure featured is always included (if it has projects)
+    const featuredCategory = DEFAULT_CATEGORIES[0];
+    const hasFeatured = categoriesWithProjects.some(c => c.slug?.current === 'featured') ||
+                        projects.some(p => p.featured === true);
     
-    return categories;
-  }, [categories]);
+    return hasFeatured 
+      ? (categoriesWithProjects.some(c => c.slug?.current === 'featured') 
+        ? categoriesWithProjects 
+        : [featuredCategory, ...categoriesWithProjects])
+      : categoriesWithProjects;
+  }, [projects, categories]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('featured');
@@ -34,8 +52,8 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
   // Debug logging
   useEffect(() => {
     console.log('Active category:', activeCategory);
-    console.log('Categories available:', allCategories.length);
-  }, [activeCategory, allCategories]);
+    console.log('Non-empty categories:', nonEmptyCategories.length);
+  }, [activeCategory, nonEmptyCategories]);
 
   // Filter projects based on search query and category
   const filteredProjects = useMemo(() => {
@@ -50,8 +68,8 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
     } 
     
     // Only proceed with category filtering if we have valid categories
-    if (allCategories.length > 0) {
-      const selectedCategory = allCategories.find(c => c?.slug?.current === activeCategory);
+    if (nonEmptyCategories.length > 0) {
+      const selectedCategory = nonEmptyCategories.find(c => c?.slug?.current === activeCategory);
       
       if (selectedCategory) {
         console.log('Filtering by category:', selectedCategory.title);
@@ -74,7 +92,7 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
     }
     
     return filtered;
-  }, [projects, activeCategory, allCategories]);
+  }, [projects, activeCategory, nonEmptyCategories]);
 
   // Search filtering
   const searchFilteredProjects = useMemo(() => {
@@ -102,6 +120,8 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
     activeCategory,
     setActiveCategory,
     filteredProjects: searchFilteredProjects,
+    // IMPORTANT: Return the non-empty categories for use in the UI
+    visibleCategories: nonEmptyCategories,
     clearFilters: () => {
       setSearchQuery('');
       setActiveCategory('featured');

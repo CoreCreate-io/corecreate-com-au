@@ -32,19 +32,9 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
   const { 
     searchQuery, setSearchQuery, 
     activeCategory, setActiveCategory,
-    filteredProjects, clearFilters 
-  } = useProjectFilter(
-    projects, 
-    // Ensure we always have the featured category at minimum
-    [
-      { 
-        _id: 'featured', 
-        title: 'Featured', 
-        slug: { current: 'featured' } 
-      },
-      ...categories
-    ]
-  );
+    filteredProjects, visibleCategories, // Get this from the hook
+    clearFilters 
+  } = useProjectFilter(projects, categories);
   
   // Project navigation and URL handling
   const {
@@ -79,6 +69,7 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
         activeCategory={activeCategory}
         setActiveCategory={setActiveCategory}
         categories={categories}
+        visibleCategories={visibleCategories} // Pass this to SearchFilters
         loading={loading}
       />
 

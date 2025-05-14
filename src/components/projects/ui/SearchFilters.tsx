@@ -9,15 +9,16 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Category } from "../types";
 import { urlForImage } from "@/lib/image";
 
+// Update your props interface
 interface SearchFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   activeCategory: string;
   setActiveCategory: (category: string) => void;
-  categories: Category[];
+  categories: Category[]; // All categories
+  visibleCategories?: Category[]; // Non-empty categories
   loading: boolean;
 }
-
 
 export function SearchFilters({
   searchQuery,
@@ -25,6 +26,7 @@ export function SearchFilters({
   activeCategory,
   setActiveCategory,
   categories,
+  visibleCategories, // Use this new prop
   loading
 }: SearchFiltersProps) {
   const [showFilters, setShowFilters] = useState(true);
@@ -39,6 +41,9 @@ export function SearchFilters({
     console.log('Clicked category slug:', categorySlug);
     setActiveCategory(categorySlug || '');
   };
+
+  // Use visibleCategories if provided, otherwise fall back to categories
+  const categoriesToShow = visibleCategories || categories;
 
   return (
     <Container className="mb-10">
@@ -84,7 +89,7 @@ export function SearchFilters({
             // Inside your categories.map function:
             <ScrollArea className="w-full pb-2">
               <div className="filter-container flex space-x-3">
-                {categories
+                {categoriesToShow
                   .filter(category => 
                     category.categoryType === 'creativeField' || 
                     category.slug?.current === 'featured'
