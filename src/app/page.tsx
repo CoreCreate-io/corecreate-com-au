@@ -30,11 +30,27 @@ export async function getProjects() {
 // Fetch categories for filtering
 export async function getCategories() {
   const categories = await client.fetch(`
-    *[_type == "category"]{
-      title
+    *[_type == "category"] | order(order asc) {
+      _id,
+      title,
+      slug,
+      description,
+      featuredImage,
+      overlayColor,
+      icon
     }
   `);
-  return ["Featured", ...categories.map((cat: { title: string }) => cat.title)];
+  
+  // Add Featured as the first category
+  return [
+    {
+      _id: "featured", 
+      title: "Featured",
+      slug: { current: "featured" },
+      overlayColor: "bg-blue-900/60"
+    },
+    ...categories
+  ];
 }
 
 // Add this to ensure content is fresh but not causing refreshes on every navigation

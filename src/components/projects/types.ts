@@ -15,9 +15,9 @@ export interface SanityImageWithCaption extends SanityImage {
 export interface Project {
   _id: string;
   title: string;
-  slug?: { current: string };
+  slug: { current: string };
   description?: string;
-  featuredImage: SanityImage;
+  featuredImage?: SanityImage;
   featuredVideoEnabled?: boolean;
   featuredVideo?: {
     asset: {
@@ -31,8 +31,9 @@ export interface Project {
     display?: 'stacked' | 'grid' | 'carousel' | 'masonry';
     zoom?: boolean;
   };
-  projectField: { title: string };
-  projectSector: { title: string };
+  projectField?: { _ref: string; slug?: { current: string } };
+  projectSector?: { _ref: string; slug?: { current: string } };
+  customTags?: string[];
   clientInfo?: { 
     clientName?: string;
     clientWebsite?: string;
@@ -45,4 +46,14 @@ export interface ProjectsGridProps {
   categories: string[];
   loading: boolean;
   initialProjectSlug?: string;
+}
+
+export interface Category {
+  _id: string;
+  title: string;
+  slug: { current: string };
+  description?: string;
+  featuredImage?: SanityImage;
+  overlayColor?: string;
+  icon?: SanityImage;
 }

@@ -15,20 +15,22 @@ import { useProjectNavigation } from "./hooks/useProjectNavigation";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
 
+// Update the ProjectsGridProps interface
 interface ProjectsGridProps {
   projects: Project[];
-  categories: string[];
+  categories: Category[]; // Changed from string[] to Category[]
   loading: boolean;
   initialProjectSlug?: string;
 }
 
 export function ProjectsGrid({ projects, categories, loading, initialProjectSlug }: ProjectsGridProps) {
   // Project filtering
+  // Make sure to modify useProjectFilter to work with Category objects instead of strings
   const { 
     searchQuery, setSearchQuery, 
     activeCategory, setActiveCategory,
     filteredProjects, clearFilters 
-  } = useProjectFilter(projects);
+  } = useProjectFilter(projects, categories);
   
   // Project navigation and URL handling
   const {

@@ -1,15 +1,20 @@
+import { useState } from "react";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Filter, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Container } from "@/components/layout/container";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Category } from "../types";
+import { urlForImage } from "@/lib/image";
 
 interface SearchFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   activeCategory: string;
   setActiveCategory: (category: string) => void;
-  categories: string[];
+  categories: Category[];
   loading: boolean;
 }
 
@@ -21,46 +26,101 @@ export const SearchFilters = ({
   categories,
   loading
 }: SearchFiltersProps) => {
+  const [showFilters, setShowFilters] = useState(true);
+
+  // Handle filter toggle
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  // Add a debugging click handler
+  const handleCategoryClick = (categorySlug: string) => {
+    console.log('Clicked category slug:', categorySlug);
+    setActiveCategory(categorySlug || '');
+  };
+
   return (
     <Container className="mb-10">
+      {/* Search Bar */}
       <div className="relative">
         <Input
-          placeholder="Search our work..."
+          placeholder="Search our work"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pr-16 rounded-full"
+          className="pr-24 pl-5 h-12 text-base rounded-full border-gray-200 shadow-sm"
         />
-        <div className="absolute right-1 top-1 flex gap-1">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Filter className="h-4 w-4" />
+        <div className="absolute right-2 top-1.5 flex gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full h-9 w-9 border-gray-200"
+            onClick={toggleFilters}
+          >
+            <Filter className="h-5 w-5 text-gray-500" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Search className="h-4 w-4" />
+          <Button 
+            variant="default" 
+            size="icon" 
+            className="rounded-full h-9 w-9"
+          >
+            <Search className="h-5 w-5" />
           </Button>
         </div>
       </div>
       
       {/* Category Filters */}
-      <div className="flex gap-2 flex-wrap mt-4">
-        {loading ? (
-          // Skeleton for category filters
-          Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={`cat-skeleton-${i}`} className="h-8 w-20 rounded-full" />
-          ))
-        ) : (
-          categories.map((category) => (
-            <Button
-              key={category}
-              variant={activeCategory === category ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveCategory(category)}
-              className="rounded-full"
-            >
-              {category}
-            </Button>
-          ))
-        )}
-      </div>
+      {showFilters && (
+        <div className="mt-6">
+          {loading ? (
+            // Skeleton for category filters
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={`cat-skeleton-${i}`} className="h-20 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            // Scrollable category filters
+            <ScrollArea className="w-full pb-4">
+              <div className="flex space-x-4 lg:grid lg:grid-cols-6 lg:gap-4">
+                {categories.map((category) => (
+                  <div 
+                    key={category._id}
+                    className={`relative overflow-hidden rounded-xl cursor-pointer transition-all flex-shrink-0 w-[150px] lg:w-full
+                      ${activeCategory === category.slug?.current ? 'ring-2 ring-primary ring-offset-2' : 'ring-0'}
+                      hover:shadow-lg`}
+                    onClick={() => handleCategoryClick(category.slug?.current || '')}
+                  >
+                    {/* Background image - Reduced height */}
+                    <div className="w-full h-20 bg-gray-200 relative">
+                      {category.featuredImage ? (
+                        <Image
+                          src={urlForImage(category.featuredImage).url()}
+                          alt={category.title}
+                          fill
+                          sizes="(max-width: 768px) 150px, 200px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        // Fallback gradient background if no image
+                        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900" />
+                      )}
+                      
+                      {/* Dark overlay */}
+                      <div className={`absolute inset-0 ${category.overlayColor || 'bg-blue-900/60'}`}></div>
+                      
+                      {/* Category name */}
+                      <div className="absolute inset-0 flex items-center justify-center p-2 text-center">
+                        <h3 className="text-white font-medium text-sm">{category.title}</h3>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" className="lg:hidden" />
+            </ScrollArea>
+          )}
+        </div>
+      )}
     </Container>
   );
 };
