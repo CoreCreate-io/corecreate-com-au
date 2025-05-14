@@ -181,6 +181,23 @@ defineField({
       },
       group: 'categories',
     }),
+    // Add a new field for subcategories
+    defineField({
+      name: 'subCategories',
+      title: 'Sub-Categories',
+      description: 'Specific sub-categories this project belongs to',
+      type: 'array',
+      of: [
+        {
+          type: 'reference',
+          to: [{ type: 'category' }],
+          options: {
+            filter: 'categoryType == "subCategory"'
+          }
+        }
+      ],
+      group: 'categories',
+    }),
     defineField({
       name: 'publishedAt',
       title: 'Published At',

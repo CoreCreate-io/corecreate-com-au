@@ -160,7 +160,7 @@ div[role="dialog"] .cc-lightbox-container {
   max-height: 100% !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
-  padding-top: 3.5rem; /* Give space for the close button */
+  padding-top: 1.5rem; /* Give space for the close button */
 }
 
 /* Enhanced close button fix for Safari mobile */
@@ -168,7 +168,6 @@ div[role="dialog"] .cc-lightbox-container {
   position: fixed !important;
   top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
   right: 1rem !important;
-  z-index: 9999 !important; /* Much higher z-index */
   background: none !important;
   /* Safari-specific fixes */
   transform: translateZ(0) !important; /* Force GPU acceleration */
@@ -180,7 +179,7 @@ div[role="dialog"] .cc-lightbox-container {
 @supports (-webkit-touch-callout: none) {
   .drawer-close-fix {
     position: fixed !important; /* Try absolute instead of fixed on Safari */
-    top: calc(env(safe-area-inset-top, 0px) + 2.5rem) !important;
+    top: calc(env(safe-area-inset-top, 0px) + 3.5rem) !important;
     right: 1rem !important;
   }
 }
@@ -213,6 +212,11 @@ div[role="dialog"] .cc-lightbox-container {
     border-radius: 0 !important;
     /* Remove Tailwind's mb-24, max-h-[80vh], rounded-b-lg, border-b, etc. */
   }
+}
+
+  /* For bar colour */
+.group-data-\[vaul-drawer-direction\=bottom\]\/drawer-content\:block {
+  background-color:#bbff0062;
 }
 
 /* Prevent Safari image save popup and improve mobile touch experience */

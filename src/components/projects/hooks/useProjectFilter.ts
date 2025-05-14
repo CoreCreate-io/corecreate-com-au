@@ -46,7 +46,6 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
     // Special case for featured
     if (activeCategory === 'featured') {
       filtered = filtered.filter(project => project.featured === true);
-      console.log('Featured projects count:', filtered.length);
       return filtered;
     } 
     
@@ -58,9 +57,18 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
         console.log('Filtering by category:', selectedCategory.title);
         
         filtered = filtered.filter(project => {
-          const fieldMatch = project.projectField?.title === selectedCategory.title;
-          const sectorMatch = project.projectSector?.title === selectedCategory.title;
-          return fieldMatch || sectorMatch;
+          // Check if the project's main field matches
+          if (project.projectField?.title === selectedCategory.title) {
+            return true;
+          }
+          
+          // Check if it's a sector match
+          if (project.projectSector?.title === selectedCategory.title) {
+            return true;
+          }
+
+          // No match found
+          return false;
         });
       }
     }
@@ -79,7 +87,12 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
       const fieldMatch = project.projectField?.title?.toLowerCase().includes(query);
       const sectorMatch = project.projectSector?.title?.toLowerCase().includes(query);
       
-      return titleMatch || descMatch || fieldMatch || sectorMatch;
+      // Add subcategory matching for search
+      const subCategoryMatch = project.subCategories?.some(
+        subCat => subCat.title?.toLowerCase().includes(query)
+      );
+      
+      return titleMatch || descMatch || fieldMatch || sectorMatch || subCategoryMatch;
     });
   }, [filteredProjects, searchQuery]);
 

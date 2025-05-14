@@ -33,6 +33,8 @@ export interface Project {
   };
   projectField?: { _ref: string; slug?: { current: string }; title?: string };
   projectSector?: { _ref: string; slug?: { current: string }; title?: string };
+  // Add the new subCategories field
+  subCategories?: Array<{ _ref: string; slug?: { current: string }; title?: string }>;
   customTags?: string[];
   clientInfo?: { 
     clientName?: string;

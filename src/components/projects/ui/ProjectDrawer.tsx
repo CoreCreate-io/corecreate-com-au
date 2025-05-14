@@ -137,28 +137,35 @@ export const ProjectDrawer = ({
             
             {/* Project Header - add padding only on mobile */}
             <div className={`mb-4 ${isMobile ? 'p-4' : ''}`}>
-              <h2 className="text-3xl font-heading font-semibold">{selectedProject?.title}</h2>
-              {selectedProject?.clientInfo?.clientName && (
+                            {selectedProject?.clientInfo?.clientName && (
                 <p className="text-xl text-muted-foreground mt-1">
                   {selectedProject.clientInfo.clientName}
                 </p>
               )}
+              <h2 className="text-3xl font-heading font-semibold">{selectedProject?.title}</h2>
               
               {/* Project Categories */}
               <div className="flex flex-wrap gap-2 mt-4">
                 {selectedProject?.projectField && (
-                  <Badge>{selectedProject.projectField.title}</Badge>
+                  <Badge variant="default">{selectedProject.projectField.title}</Badge>
                 )}
+                
                 {selectedProject?.projectSector && (
                   <Badge variant="secondary">{selectedProject.projectSector.title}</Badge>
                 )}
+                
+                {/* Add subcategories display */}
+                {selectedProject?.subCategories?.map(subCat => (
+                  <Badge key={subCat._ref} variant="outline">
+                    {subCat.title}
+                  </Badge>
+                ))}
               </div>
             </div>
             
             {/* Project Description - add padding only on mobile */}
             {selectedProject?.description && (
               <div className={`mb-4 ${isMobile ? 'px-4' : ''}`}>
-                <h3 className="text-xl font-medium mb-3">About this project</h3>
                 <p className="text-muted-foreground text-lg leading-relaxed">{selectedProject.description}</p>
               </div>
             )}

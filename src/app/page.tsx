@@ -11,6 +11,10 @@ export async function getProjects() {
       title,
       slug,
       description,
+      "projectField": projectField->{_id, title, slug},
+      "projectSector": projectSector->{_id, title, slug},
+      "subCategories": subCategories[]->{ _id, title, slug },
+      featured,
       featuredImage,
       featuredVideoEnabled,
       featuredVideo{
@@ -19,10 +23,7 @@ export async function getProjects() {
         }
       },
       gallery,
-      projectField->{title},
-      projectSector->{title},
-      clientInfo,
-      featured
+      clientInfo
     }
   `);
 }
