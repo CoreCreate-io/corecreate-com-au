@@ -7,13 +7,22 @@ import { Project, Category } from "./types";
 import { SearchFilters } from "./ui/SearchFilters";
 import { ProjectCard } from "./components/ProjectCard";
 import { ProjectSkeleton } from "./ui/ProjectSkeleton";
-import { ProjectDrawer } from "./ui/ProjectDrawer";
 import { ImageLightbox } from "./ui/ImageLightbox";
 import { useProjectFilter } from "./hooks/useProjectFilter";
 import { useLightbox } from "./hooks/useLightbox";
 import { useProjectNavigation } from "./hooks/useProjectNavigation";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
+import dynamic from 'next/dynamic'
+
+// Replace your direct import with this dynamic import
+const ProjectDrawer = dynamic(
+  () => import('./ui/ProjectDrawer').then(mod => mod.default),
+  { 
+    loading: () => <div className="loading-placeholder">Loading project...</div>,
+    ssr: false // If this component uses browser APIs like window
+  }
+)
 
 interface ProjectsGridProps {
   projects: Project[];
