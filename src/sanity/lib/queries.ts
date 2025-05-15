@@ -165,12 +165,13 @@ export async function getHomePage() {
       pageTitle,
       featureVideo{
         asset->{
-          _id,
           url
         },
         title,
         caption
       },
+      subtitleText,
+      // Other fields...
     }
   `);
 }

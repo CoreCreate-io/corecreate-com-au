@@ -21,6 +21,43 @@ export default defineType({
       readOnly: true,
       group: 'hero',
     }),
+
+    // Single subtitle field with rich text
+    defineField({
+      name: 'subtitleText',
+      title: 'Subtitle Text',
+      description: 'Text shown below the video (use formatting to highlight important words)',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [{ title: 'Normal', value: 'normal' }],
+          lists: [],
+          marks: {
+            decorators: [
+              { title: 'Strong', value: 'strong' }, 
+              { title: 'Emphasis', value: 'em' }
+            ],
+            annotations: [
+              {
+                name: 'highlight',
+                type: 'object',
+                title: 'Highlight', 
+                fields: [
+                  {
+                    name: 'active',
+                    type: 'boolean',
+                    title: 'Highlight Text',
+                    initialValue: true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      group: 'hero',
+    }),
     
     // Example field definition to add to your page schemas
     defineField({

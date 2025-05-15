@@ -1,14 +1,11 @@
 import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
 import { Container } from "@/components/layout/container";
-import { getProjects, getCategories } from "@/sanity/lib/queries";
+import { getProjects, getCategories, getHomePage } from "@/sanity/lib/queries";
 import FeatureVideo from "@/components/FeatureVideo";
-import { getHomePage } from "@/sanity/lib/queries"; // Your Sanity query function
+import { FormattedText } from "@/components/ui/FormattedText";
 
-import "./globals.css";
-
-// Add this to ensure content is fresh but not causing refreshes on every navigation
 export const dynamic = 'force-static';
-export const revalidate = 3600; // Revalidate content every hour
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const homeData = await getHomePage();
@@ -25,19 +22,19 @@ export default async function HomePage() {
         />
       )}
       
-      {/* Hero Section */}
+      {/* Subtitle Section with Formatted Text */}
       <section className="py-16 md:py-24">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-semibold leading-tight">
-              From <span className="text-primary">concept to creation</span>, we handle every stage of your 
-              digital presence. Whether you need a standout <span className="text-primary">brand</span>, a 
-              <span className="text-primary"> high-converting website</span>, or 
-              <span className="text-primary"> compelling video content</span>.
-            </h1>
-            <p className="mt-6 text-xl text-muted-foreground">
-              We bring it all together <span className="font-medium text-foreground">under one creative roof</span>.
-            </p>
+            {homeData?.subtitleText ? (
+              <div className="text-2xl md:text-3xl lg:text-4xl leading-relaxed">
+                <FormattedText value={homeData.subtitleText} />
+              </div>
+            ) : (
+              <div className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-muted-foreground">
+                From <span className="text-foreground font-medium">concept to creation</span>, we handle every stage of your digital presence. Whether you need a standout brand, a <span className="text-foreground font-medium">high-converting website</span>, or <span className="text-foreground font-medium">compelling video content</span>. We bring it all together <span className="text-foreground font-medium">under one creative roof</span>.
+              </div>
+            )}
           </div>
         </Container>
       </section>
