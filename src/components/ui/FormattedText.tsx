@@ -1,20 +1,29 @@
 import { PortableText } from '@portabletext/react';
+import { PortableTextBlock } from '@portabletext/types';
+import React from 'react';
 
 interface FormattedTextProps {
-  value: any;
+  value: PortableTextBlock[] | undefined;
   className?: string;
+}
+
+interface MarkComponentProps {
+  children: React.ReactNode;
+  value?: {
+    active?: boolean;
+  };
 }
 
 const components = {
   marks: {
-    highlight: ({children}: any) => {
+    highlight: ({children}: MarkComponentProps) => {
       return (
         <span className="text-foreground font-medium">
           {children}
         </span>
       );
     },
-    strong: ({children}: any) => {
+    strong: ({children}: MarkComponentProps) => {
       return (
         <span className="text-foreground font-medium">
           {children}

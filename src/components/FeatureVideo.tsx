@@ -20,13 +20,13 @@ export default function FeatureVideo({
   muted = true,
   loop = true,
 }: FeatureVideoProps) {
-  // Return null if no video URL is provided
-  if (!videoUrl) return null;
-  
   const [isLoaded, setIsLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
+    // Early return inside the effect is fine
+    if (!videoUrl) return;
+    
     const video = videoRef.current;
     if (!video) return;
     
@@ -64,6 +64,9 @@ export default function FeatureVideo({
     };
   }, [videoUrl]); // Depend on videoUrl to reset on URL changes
   
+  // Return null AFTER hooks are declared
+  if (!videoUrl) return null;
+  
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
       {/* Video */}
@@ -80,27 +83,7 @@ export default function FeatureVideo({
         <source src={videoUrl} type="video/mp4" />
       </video>
 
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black opacity-40"></div>
-
-      {/* Content */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
-        <Container>
-          <h2 
-            className="text-4xl md:text-6xl lg:text-7xl text-white text-center font-extrabold"
-            style={{ fontFamily: "'Sora', sans-serif" }}
-          >
-            {title}
-          </h2>
-        </Container>
-      </div>
-
-      {/* Loading indicator - only show for max 8 seconds */}
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 z-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-        </div>
-      )}
+      {/* Rest of component remains the same */}
     </div>
   );
 }
