@@ -35,6 +35,7 @@ export default function RootLayout({
       </head>
       <body className={`${manrope.variable} ${sora.variable} ${geistMono.variable} antialiased`}>
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
