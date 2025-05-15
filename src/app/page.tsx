@@ -17,11 +17,11 @@ export default async function HomePage() {
   
   return (
     <main className="min-h-screen pb-16">
-      {homeData?.heroVideo?.asset?.url && (
+      {homeData?.featureVideo?.asset?.url && (
         <FeatureVideo 
-          videoUrl={homeData.heroVideo.asset.url} 
+          videoUrl={homeData.featureVideo.asset.url} 
           title={homeData.featureVideo?.title || "Create Your Vision"} 
-          posterImage={homeData.heroImage?.asset?.url} 
+          posterImage={homeData.featureVideo?.caption || ""}
         />
       )}
       

@@ -163,25 +163,14 @@ export async function getHomePage() {
   return await client.fetch(`
     *[_type == "homePage"][0]{
       pageTitle,
-      heroTitle,
-      heroSubtitle,
-      heroImage{
-        asset->{
-          url
-        }
-      },
-      heroVideo{
-        asset->{
-          url
-        }
-      },
       featureVideo{
         asset->{
+          _id,
           url
         },
-        title
+        title,
+        caption
       },
-      // Other fields...
     }
   `);
 }

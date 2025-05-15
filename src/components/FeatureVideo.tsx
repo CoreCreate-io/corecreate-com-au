@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause } from "lucide-react";
+import { Container } from "@/components/layout/container";
 
 interface FeatureVideoProps {
-  videoUrl?: string; // Make videoUrl optional
+  videoUrl?: string;
   title: string;
   posterImage?: string;
   autoPlay?: boolean;
@@ -23,43 +23,50 @@ export default function FeatureVideo({
   // Return null if no video URL is provided
   if (!videoUrl) return null;
   
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [videoQuality, setVideoQuality] = useState('low');
   const videoRef = useRef<HTMLVideoElement>(null);
-
+  
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleLoaded = () => setIsLoaded(true);
-
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("loadeddata", handleLoaded);
-
-    return () => {
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-      video.removeEventListener("loadeddata", handleLoaded);
+    
+    // Reset loading state on each mount/refresh
+    setIsLoaded(false);
+    
+    // Multiple events to handle different browser behaviors
+    const events = ["loadeddata", "canplay", "playing", "loadedmetadata"];
+    
+    const handleLoaded = () => {
+      setIsLoaded(true);
     };
-  }, []);
-
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
+    
+    // Add all event listeners
+    events.forEach(event => {
+      video.addEventListener(event, handleLoaded);
+    });
+    
+    // Fallback timeout - if video hasn't loaded in 5 seconds, show it anyway
+    const fallbackTimer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 5000);
+    
+    // Handle case where video is already cached and ready
+    if (video.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+      setIsLoaded(true);
     }
-  };
-
+    
+    return () => {
+      // Clean up all event listeners
+      events.forEach(event => {
+        video.removeEventListener(event, handleLoaded);
+      });
+      clearTimeout(fallbackTimer);
+    };
+  }, [videoUrl]); // Depend on videoUrl to reset on URL changes
+  
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
-      {/* Video Background */}
+      {/* Video */}
       <video
         ref={videoRef}
         className="absolute w-full h-full object-cover"
@@ -69,39 +76,26 @@ export default function FeatureVideo({
         loop={loop}
         playsInline
         preload="auto"
-        onLoadedMetadata={() => setIsLoaded(true)}
       >
-        <source src={`${videoUrl}?quality=low`} type="video/mp4" />
         <source src={videoUrl} type="video/mp4" />
       </video>
 
-      {/* Dark Overlay for better text visibility */}
+      {/* Dark Overlay */}
       <div className="absolute inset-0 bg-black opacity-40"></div>
 
-      {/* Centered Content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-4 z-10">
-        <h2 
-          className="text-4xl md:text-6xl lg:text-7xl text-white text-center font-extrabold"
-          style={{ fontFamily: "'Sora', sans-serif" }}
-        >
-          {title}
-        </h2>
-        
-        {/* Play/Pause Button */}
-        <button
-          onClick={togglePlay}
-          className="mt-8 flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-full hover:bg-opacity-30 transition-all duration-300 focus:outline-none"
-          aria-label={isPlaying ? "Pause video" : "Play video"}
-        >
-          {isPlaying ? (
-            <Pause className="w-6 h-6 text-white" />
-          ) : (
-            <Play className="w-6 h-6 text-white ml-1" />
-          )}
-        </button>
+      {/* Content */}
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        <Container>
+          <h2 
+            className="text-4xl md:text-6xl lg:text-7xl text-white text-center font-extrabold"
+            style={{ fontFamily: "'Sora', sans-serif" }}
+          >
+            {title}
+          </h2>
+        </Container>
       </div>
 
-      {/* Loading indicator */}
+      {/* Loading indicator - only show for max 8 seconds */}
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 z-20">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
