@@ -3,6 +3,13 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { urlForImage } from "@/lib/image";
 import { Project } from "../types";
+import dynamic from 'next/dynamic'
+
+// Use dynamic import with loading fallback
+const ProjectDrawer = dynamic(
+  () => import('@/components/projects/ui/ProjectDrawer'),
+  { loading: () => <div>Loading...</div> }
+)
 
 export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   // Collect images first

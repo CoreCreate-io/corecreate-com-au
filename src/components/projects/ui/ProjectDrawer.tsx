@@ -25,14 +25,14 @@ interface ImageOrientations {
   [key: string]: 'portrait' | 'landscape' | 'unknown';
 }
 
-export const ProjectDrawer = ({
+const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
   selectedProject,
   setSelectedProject,
   projectImages,
   setCurrentImageIndex,
   setLightboxOpen,
   isClosing = false // Default to false
-}: ProjectDrawerProps) => {
+}) => {
   const [isMobile, setIsMobile] = useState(false);
   const [imageOrientations, setImageOrientations] = useState<ImageOrientations>({});
   
@@ -271,3 +271,5 @@ export const ProjectDrawer = ({
     </Drawer>
   );
 };
+
+export default ProjectDrawer;
