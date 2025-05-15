@@ -11,6 +11,7 @@ const manrope = Manrope({
 
 const sora = Sora({
   variable: "--font-sora",
+    display: "swap",
   subsets: ["latin"],
 });
 

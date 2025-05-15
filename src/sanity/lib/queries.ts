@@ -158,3 +158,30 @@ export async function getSubcategoriesForField(fieldSlug: string): Promise<Categ
     }
   `, { fieldSlug });
 }
+
+export async function getHomePage() {
+  return await client.fetch(`
+    *[_type == "homePage"][0]{
+      pageTitle,
+      heroTitle,
+      heroSubtitle,
+      heroImage{
+        asset->{
+          url
+        }
+      },
+      heroVideo{
+        asset->{
+          url
+        }
+      },
+      featureVideo{
+        asset->{
+          url
+        },
+        title
+      },
+      // Other fields...
+    }
+  `);
+}

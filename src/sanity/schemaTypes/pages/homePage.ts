@@ -22,61 +22,28 @@ export default defineType({
       group: 'hero',
     }),
     
-    // Hero Section
+    // Example field definition to add to your page schemas
     defineField({
-      name: 'heroTitle',
-      title: 'Hero Title',
-      type: 'string',
-      group: 'hero',
-    }),
-    defineField({
-      name: 'heroSubtitle',
-      title: 'Hero Subtitle',
-      type: 'text',
-      rows: 3,
-      group: 'hero',
-    }),
-    defineField({
-      name: 'heroImage',
-      title: 'Hero Image',
-      type: 'image',
+      name: 'featureVideo',
+      title: 'Feature Video',
+      type: 'file',
       options: {
-        hotspot: true,
+        accept: 'video/*'
       },
-      group: 'hero',
-    }),
-    
-    // Featured Projects Section
-    defineField({
-      name: 'featuredSectionTitle',
-      title: 'Featured Section Title',
-      type: 'string',
-      group: 'featured',
-    }),
-    defineField({
-      name: 'featuredSectionDescription',
-      title: 'Featured Section Description',
-      type: 'text',
-      rows: 2,
-      group: 'featured',
-    }),
-    defineField({
-      name: 'featuredProjects',
-      title: 'Featured Projects',
-      description: 'Select projects to feature on the homepage',
-      type: 'array',
-      of: [
+      fields: [
         {
-          type: 'reference',
-          to: [{ type: 'project' }],
-          options: {
-            filter: 'featured == true',
-          },
+          name: 'title',
+          title: 'Video Title',
+          type: 'string'
         },
-      ],
-      group: 'featured',
+        {
+          name: 'caption',
+          title: 'Caption',
+          type: 'string'
+        }
+      ]
     }),
-    
+
     // SEO Section
     defineField({
       name: 'seo',

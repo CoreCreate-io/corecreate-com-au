@@ -1,18 +1,30 @@
 import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
 import { Container } from "@/components/layout/container";
 import { getProjects, getCategories } from "@/sanity/lib/queries";
+import FeatureVideo from "@/components/FeatureVideo";
+import { getHomePage } from "@/sanity/lib/queries"; // Your Sanity query function
+
 import "./globals.css";
 
 // Add this to ensure content is fresh but not causing refreshes on every navigation
 export const dynamic = 'force-static';
 export const revalidate = 3600; // Revalidate content every hour
 
-export default async function ProjectsPage() {
+export default async function HomePage() {
+  const homeData = await getHomePage();
   const projects = await getProjects();
   const categories = await getCategories();
   
   return (
     <main className="min-h-screen pb-16">
+      {homeData?.heroVideo?.asset?.url && (
+        <FeatureVideo 
+          videoUrl={homeData.heroVideo.asset.url} 
+          title={homeData.featureVideo?.title || "Create Your Vision"} 
+          posterImage={homeData.heroImage?.asset?.url} 
+        />
+      )}
+      
       {/* Hero Section */}
       <section className="py-16 md:py-24">
         <Container>
