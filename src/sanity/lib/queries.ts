@@ -36,23 +36,19 @@ export async function getProjects(): Promise<Project[]> {
 export async function getProjectBySlug(slug: string): Promise<Project | null> {
   return await client.fetch(`
     *[_type == "project" && slug.current == $slug][0]{
-      _id,
-      title,
-      slug,
-      description,
-      "projectField": projectField->{_id, title, slug},
-      "projectSector": projectSector->{_id, title, slug},
-      "subCategories": subCategories[]->{ _id, title, slug },
-      featured,
-      featuredImage,
-      featuredVideoEnabled,
-      featuredVideo{
-        asset->{
-          url
-        }
+      ...,
+      "featuredImage": featuredImage,
+      "gallery": gallery{
+        "images": images[]{
+          ...,
+          "asset": asset->
+        },
+        display,
+        zoom
       },
-      gallery,
-      clientInfo
+      "projectField": projectField->,
+      "projectSector": projectSector->,
+      "subCategories": subCategories[]->
     }
   `, { slug });
 }

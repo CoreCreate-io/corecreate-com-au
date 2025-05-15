@@ -14,6 +14,7 @@ import { useProjectNavigation } from "./hooks/useProjectNavigation";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
 import dynamic from 'next/dynamic'
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Replace your direct import with this dynamic import
 const ProjectDrawer = dynamic(
@@ -70,7 +71,7 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
   ));
 
   return (
-    <>
+    <ErrorBoundary>
       {/* Search and Filter Section */}
       <SearchFilters
         searchQuery={searchQuery}
@@ -138,6 +139,6 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
           touchStartX={touchStartX}
         />
       </Container>
-    </>
+    </ErrorBoundary>
   );
 }
