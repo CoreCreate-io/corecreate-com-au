@@ -1,21 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { Project, Category } from "./types";
 import { SearchFilters } from "./ui/SearchFilters";
 import { ProjectCard } from "./components/ProjectCard";
 import { ProjectSkeleton } from "./ui/ProjectSkeleton";
-import { ImageLightbox } from "./ui/ImageLightbox";
+import ImageLightbox from "./ui/ImageLightbox";
 import { useProjectFilter } from "./hooks/useProjectFilter";
 import { useLightbox } from "./hooks/useLightbox";
 import { useProjectNavigation } from "./hooks/useProjectNavigation";
 import { getAllProjectImages } from "./utils/projectHelpers";
 import "./ProjectsOverride.css";
 import dynamic from 'next/dynamic'
-import ErrorBoundary from "./components/ErrorBoundary";
-import { useInView } from 'react-intersection-observer';
 
 // Replace your direct import with this dynamic import
 const ProjectDrawer = dynamic(
@@ -34,32 +32,36 @@ interface ProjectsGridProps {
 }
 
 export function ProjectsGrid({ projects = [], categories = [], loading, initialProjectSlug }: ProjectsGridProps) {
-  // Initialize state with provided projects
-  const [allProjects, setAllProjects] = useState(projects);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  
-  // Use the combined projects for filtering, etc.
+  // Add debugging for categories
+  useEffect(() => {
+    console.log("ProjectsGrid received categories:", categories);
+  }, [categories]);
+
+  // Only initialize filter when data is available
   const { 
     searchQuery, setSearchQuery, 
     activeCategory, setActiveCategory,
-    filteredProjects, visibleCategories, clearFilters 
-  } = useProjectFilter(allProjects, categories);  // Use allProjects instead of projects
+    filteredProjects, visibleCategories, // Get this from the hook
+    clearFilters 
+  } = useProjectFilter(projects, categories);
   
-  // Project drawer state and logic
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
+  // Project navigation and URL handling
+  const {
+    selectedProject,
+    isClosing,
+    selectProject,
+    closeProject
+  } = useProjectNavigation(initialProjectSlug, projects);
   
-  // Get project images for the selected project
-  const projectImages = selectedProject ? getAllProjectImages(selectedProject) : [];
+  // Get project images
+  const projectImages = getAllProjectImages(selectedProject);
   
-  // Image lightbox state
+  // Lightbox functionality
   const {
     lightboxOpen, setLightboxOpen,
     currentImageIndex, setCurrentImageIndex,
-    nextImage, prevImage,
-    handleKeyDown, handleLightboxTouchStart, handleLightboxTouchMove, touchStartX
+    nextImage, prevImage, handleKeyDown,
+    handleLightboxTouchStart, handleLightboxTouchMove, touchStartX
   } = useLightbox(projectImages.length);
 
   // Create skeleton placeholders for loading state
@@ -67,40 +69,8 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
     <ProjectSkeleton key={`skeleton-${i}`} />
   ));
 
-  // Keep your intersection observer for lazy loading more
-  const { ref, inView } = useInView({
-    threshold: 0.1,
-    triggerOnce: false
-  });
-  
-  // Load more projects when bottom element comes into view
-  useEffect(() => {
-    const loadMore = async () => {
-      if (!inView || isLoadingMore || !hasMore) return;
-      
-      try {
-        setIsLoadingMore(true);
-        const skip = page * 8; // 8 projects per page
-        const moreProjects = await fetch(`/api/projects?skip=${skip}&limit=8`).then(r => r.json());
-        
-        if (moreProjects.length === 0) {
-          setHasMore(false);
-        } else {
-          setAllProjects(prev => [...prev, ...moreProjects]);
-          setPage(p => p + 1);
-        }
-      } catch (error) {
-        console.error("Error loading more projects:", error);
-      } finally {
-        setIsLoadingMore(false);
-      }
-    };
-    
-    loadMore();
-  }, [inView, page, isLoadingMore, hasMore]);
-
   return (
-    <ErrorBoundary>
+    <>
       {/* Search and Filter Section */}
       <SearchFilters
         searchQuery={searchQuery}
@@ -130,26 +100,15 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
                 </Button>
               </div>
             ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {filteredProjects.map((project) => (
-                    <ProjectCard 
-                      key={project._id} 
-                      project={project} 
-                      onClick={setSelectedProject} 
-                    />
-                  ))}
-                </div>
-                
-                {/* Load more trigger */}
-                {hasMore && (
-                  <div ref={ref} className="h-20 flex items-center justify-center mt-8">
-                    {isLoadingMore && (
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                    )}
-                  </div>
-                )}
-              </>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {filteredProjects.map((project) => (
+                  <ProjectCard 
+                    key={project._id} 
+                    project={project} 
+                    onClick={selectProject} 
+                  />
+                ))}
+              </div>
             )}
           </>
         )}
@@ -157,7 +116,7 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
         {/* Project Drawer */}
         <ProjectDrawer
           selectedProject={selectedProject}
-          setSelectedProject={setSelectedProject}
+          setSelectedProject={closeProject}
           projectImages={projectImages}
           setCurrentImageIndex={setCurrentImageIndex}
           setLightboxOpen={setLightboxOpen}
@@ -179,6 +138,6 @@ export function ProjectsGrid({ projects = [], categories = [], loading, initialP
           touchStartX={touchStartX}
         />
       </Container>
-    </ErrorBoundary>
+    </>
   );
 }

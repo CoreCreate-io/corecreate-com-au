@@ -21,7 +21,7 @@ interface ImageLightboxProps {
   touchStartX: React.RefObject<number | null>;
 }
 
-export const ImageLightbox = ({
+const ImageLightbox = ({
   selectedProject,
   lightboxOpen,
   setLightboxOpen,
@@ -141,3 +141,5 @@ export const ImageLightbox = ({
     </div>
   );
 };
+
+export default ImageLightbox;

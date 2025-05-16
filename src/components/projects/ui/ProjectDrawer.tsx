@@ -223,6 +223,15 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 <div className={`flex flex-col ${isMobile ? 'space-y-0' : 'space-y-6'}`}>
                   {projectImages.slice(1).map((image, index, array) => {
                     // Use type assertion to tell TypeScript this might be a SanityImageWithCaption
+                    type ImageWithOptionalCaption = SanityImage & {
+                      caption?: string;
+                      alt?: string;
+                    };
+
+                    const getCaption = (image: SanityImage): string | undefined => {
+                      return 'caption' in image ? (image as ImageWithOptionalCaption).caption : undefined;
+                    };
+
                     const imageWithCaption = image as SanityImageWithCaption;
                     const imageKey = `img-${index + 1}`; // +1 because we've sliced off the first image
                     const styles = getImageStyles(imageKey);
@@ -255,7 +264,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                         {/* Caption with padding only on desktop or if mobile */}
                         {imageWithCaption.caption && (
                           <p className={`text-sm text-muted-foreground mt-1 ${isMobile ? 'px-4 pb-2' : 'px-0 pb-0'}`}>
-                            {imageWithCaption.caption}
+                            {getCaption(image)}
                           </p>
                         )}
                       </div>

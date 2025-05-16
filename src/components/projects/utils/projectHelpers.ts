@@ -3,23 +3,29 @@ import { Project } from "../types"; // Fixed: Remove unused SanityImage import
 /**
  * Gets all images for a project, combining featured image and gallery
  */
-export function getAllProjectImages(project: Project | null) {
+export const getAllProjectImages = (project: Project | null) => {
   if (!project) return [];
   
   const images = [];
   
-  // Add featured image if it exists
+  // Always add featured image to the gallery, regardless of video
   if (project.featuredImage) {
     images.push(project.featuredImage);
   }
   
-  // Add gallery images if they exist - handle the correct structure
-  if (project.gallery && project.gallery.images && Array.isArray(project.gallery.images)) {
-    project.gallery.images.forEach(img => {
-      if (img) images.push(img);
-    });
+  // Add gallery images if they exist
+  if (project.gallery?.images && project.gallery.images.length > 0) {
+    images.push(...project.gallery.images);
   }
   
-  console.log("Extracted images:", images.length);
   return images;
-}
+};
+
+/**
+ * Gets adjacent image indices for preloading
+ */
+export const getAdjacentIndices = (currentIndex: number, totalImages: number) => {
+  const prev = (currentIndex - 1 + totalImages) % totalImages;
+  const next = (currentIndex + 1) % totalImages;
+  return { prev, next };
+};

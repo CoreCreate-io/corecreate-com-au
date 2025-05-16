@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Project, Category } from '../types';
 
 // Ensure we always have the featured category
@@ -55,44 +55,31 @@ export function useProjectFilter(projects: Project[] = [], categories: Category[
     console.log('Non-empty categories:', nonEmptyCategories.length);
   }, [activeCategory, nonEmptyCategories]);
 
-  // Filter projects based on search query and category
-  const filteredProjects = useMemo(() => {
-    if (!projects || !projects.length) return [];
-    
-    let filtered = [...projects];
-    
-    // Special case for featured
-    if (activeCategory === 'featured') {
-      filtered = filtered.filter(project => project.featured === true);
-      return filtered;
-    } 
-    
-    // Only proceed with category filtering if we have valid categories
-    if (nonEmptyCategories.length > 0) {
-      const selectedCategory = nonEmptyCategories.find(c => c?.slug?.current === activeCategory);
-      
-      if (selectedCategory) {
-        console.log('Filtering by category:', selectedCategory.title);
-        
-        filtered = filtered.filter(project => {
-          // Check if the project's main field matches
-          if (project.projectField?.title === selectedCategory.title) {
-            return true;
-          }
-          
-          // Check if it's a sector match
-          if (project.projectSector?.title === selectedCategory.title) {
-            return true;
-          }
-
-          // No match found
-          return false;
-        });
-      }
+  const matchesCategory = useCallback((project: Project, categorySlug: string) => {
+    if (categorySlug === 'featured') {
+      return project.featured === true;
     }
     
-    return filtered;
-  }, [projects, activeCategory, nonEmptyCategories]);
+    // Check project field match
+    if (project.projectField?.slug?.current === categorySlug) {
+      return true;
+    }
+    
+    // Check sector match
+    if (project.projectSector?.slug?.current === categorySlug) {
+      return true;
+    }
+    
+    // Check subcategories
+    return project.subCategories?.some(cat => cat.slug?.current === categorySlug) || false;
+  }, []);
+
+  // Filter projects based on search query and category
+  const filteredProjects = useMemo(() => {
+    if (!projects.length) return [];
+    
+    return projects.filter(project => matchesCategory(project, activeCategory));
+  }, [projects, activeCategory, matchesCategory]);
 
   // Search filtering
   const searchFilteredProjects = useMemo(() => {
