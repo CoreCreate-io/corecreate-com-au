@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/drawer";
 import { urlForImage } from "@/lib/image";
 import { Project, SanityImage, SanityImageWithCaption } from "../types";
+import { MuxVideo } from "../components/MuxVideo";
 
 interface ProjectDrawerProps {
   selectedProject: Project | null;
@@ -171,21 +172,19 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             )}
             
             {/* Featured Video or Image */}
-            {selectedProject?.featuredVideoEnabled && selectedProject.featuredVideo?.asset?.url ? (
-              <div className={`${isMobile ? 'mb-1' : 'mb-6'}`}>
-                <div className="relative w-full bg-black">
-                  {/* No border-radius applied for videos */}
-                  <video
-                    src={selectedProject.featuredVideo.asset.url}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    controls
-                    className="w-full h-full"
-                    style={{ display: 'block' }}
-                  />
-                </div>
+            {selectedProject?.featuredVideoEnabled && selectedProject.featuredVideo?.video?.asset?.playbackId ? (
+              <div className="relative w-full aspect-video bg-black">
+                <MuxVideo
+                  playbackId={selectedProject.featuredVideo.video.asset.playbackId}
+                  className="w-full h-full"
+                  controls={true}
+                  autoplay={true}
+                  loop={false}
+                  muted={false}
+                  controlsStyle="minimal"
+                  view="drawer"
+                  fitMode="contain"
+                />
               </div>
             ) : projectImages.length > 0 && (
               <div className={`${isMobile ? 'mb-1' : 'mb-6'}`}>
@@ -223,15 +222,6 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 <div className={`flex flex-col ${isMobile ? 'space-y-0' : 'space-y-6'}`}>
                   {projectImages.slice(1).map((image, index, array) => {
                     // Use type assertion to tell TypeScript this might be a SanityImageWithCaption
-                    type ImageWithOptionalCaption = SanityImage & {
-                      caption?: string;
-                      alt?: string;
-                    };
-
-                    const getCaption = (image: SanityImage): string | undefined => {
-                      return 'caption' in image ? (image as ImageWithOptionalCaption).caption : undefined;
-                    };
-
                     const imageWithCaption = image as SanityImageWithCaption;
                     const imageKey = `img-${index + 1}`; // +1 because we've sliced off the first image
                     const styles = getImageStyles(imageKey);
@@ -264,7 +254,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                         {/* Caption with padding only on desktop or if mobile */}
                         {imageWithCaption.caption && (
                           <p className={`text-sm text-muted-foreground mt-1 ${isMobile ? 'px-4 pb-2' : 'px-0 pb-0'}`}>
-                            {getCaption(image)}
+                            {imageWithCaption.caption}
                           </p>
                         )}
                       </div>

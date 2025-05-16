@@ -1,109 +1,141 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Container } from "@/components/layout/container";
+import MuxPlayer from '@mux/mux-player-react';
+import Image from 'next/image';
+
+// Import the correct type from MuxPlayer React
+import type { MuxPlayerRefAttributes } from '@mux/mux-player-react';
 
 interface FeatureVideoProps {
-  videoUrl?: string;
+  playbackId?: string;
   title: string;
-  posterImage?: string;
   autoPlay?: boolean;
   muted?: boolean;
   loop?: boolean;
 }
 
 export default function FeatureVideo({
-  videoUrl,
+  playbackId,
   title,
-  posterImage,
   autoPlay = true,
   muted = true,
   loop = true,
 }: FeatureVideoProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isBuffering, setIsBuffering] = useState(true);
+  const [isError, setIsError] = useState(false);
   
+  // Use the correct ref type from MuxPlayer
+  const playerRef = useRef<MuxPlayerRefAttributes>(null);
+
+  
+  // Handle errors or missing playback ID
   useEffect(() => {
-    // Early return inside the effect is fine
-    if (!videoUrl) return;
+    if (!playbackId) return;
     
-    const video = videoRef.current;
-    if (!video) return;
+    const timer = setTimeout(() => {
+      if (!isLoaded) {
+        console.log('Video taking too long to load, showing content anyway');
+        setIsLoaded(true);
+        setIsBuffering(false);
+      }
+    }, 5000); // 5 second fallback
     
-    // Reset loading state on each mount/refresh
-    setIsLoaded(false);
+    return () => clearTimeout(timer);
+  }, [isLoaded, playbackId]);
+
+  // Add resize observer to ensure proper sizing after window resize
+  useEffect(() => {
+    if (!playerRef.current) return;
     
-    // Multiple events to handle different browser behaviors
-    const events = ["loadeddata", "canplay", "playing", "loadedmetadata"];
-    
-    const handleLoaded = () => {
-      setIsLoaded(true);
-    };
-    
-    // Add all event listeners
-    events.forEach(event => {
-      video.addEventListener(event, handleLoaded);
+    const resizeObserver = new ResizeObserver(() => {
+      // Force update to ensure video covers container
+      if (playerRef.current && playerRef.current.style) {
+        playerRef.current.style.width = '100%';
+        playerRef.current.style.height = '100%';
+      }
     });
     
-    // Fallback timeout - if video hasn't loaded in 5 seconds, show it anyway
-    const fallbackTimer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 5000);
-    
-    // Handle case where video is already cached and ready
-    if (video.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
-      setIsLoaded(true);
-    }
+    resizeObserver.observe(playerRef.current);
     
     return () => {
-      // Clean up all event listeners
-      events.forEach(event => {
-        video.removeEventListener(event, handleLoaded);
-      });
-      clearTimeout(fallbackTimer);
+      resizeObserver.disconnect();
     };
-  }, [videoUrl]); // Depend on videoUrl to reset on URL changes
+  }, []); // No dependencies needed here
   
-  // Return null AFTER hooks are declared
-  if (!videoUrl) return null;
+  // Return null if no video
+  if (!playbackId) return null;
   
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
+      {/* Thumbnail placeholder instead of loading spinner */}
+      {(isBuffering || !isLoaded) && (
+        <div className="absolute inset-0 w-full h-full z-10">
+          
+          {/* Small loading indicator on top of thumbnail */}
+          <div className="absolute bottom-4 right-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+          </div>
+        </div>
+      )}
+      
       {/* Video */}
-      <video
-        ref={videoRef}
-        className="absolute w-full h-full object-cover"
-        poster={posterImage}
-        autoPlay={autoPlay}
-        muted={muted}
-        loop={loop}
-        playsInline
-        preload="auto"
-      >
-        <source src={videoUrl} type="video/mp4" />
-      </video>
+      <div className="absolute inset-0 w-full h-full">
+        <MuxPlayer
+          ref={playerRef}
+          streamType="on-demand"
+          playbackId={playbackId}
+          autoPlay={autoPlay}
+          muted={muted}
+          loop={loop}
+          preload="auto"
+          startTime={0}
+          className="w-full h-full"
+          onLoadStart={() => setIsBuffering(true)}
+          onCanPlay={() => {
+            setIsLoaded(true);
+            setIsBuffering(false);
+          }}
+          onWaiting={() => setIsBuffering(true)}
+          onPlaying={() => setIsBuffering(false)}
+          onError={(e) => {
+            console.error('Mux video error:', e);
+            setIsError(true);
+            setIsLoaded(true);
+            setIsBuffering(false);
+          }}
+          style={{
+            height: '100%',
+            width: '100%',
+            '--controls': 'none',
+            '--media-object-fit': 'cover',
+            '--media-object-position': 'center center',
+            '--poster-object-fit': 'cover',
+            '--stalled-retry-timeout': '0',
+            '--stalled-retry-count': '3',
+            position: 'absolute',
+            inset: 0,
+            opacity: isLoaded && !isBuffering ? 1 : 0.3, // Fade in when loaded
+            transition: 'opacity 1s ease-in-out',
+          } as React.CSSProperties}
+          metadata={{ video_title: title }}
+          envKey={process.env.NEXT_PUBLIC_MUX_ENV_KEY}
+        />
+      </div>
 
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black opacity-40"></div>
+      {/* Dark Overlay - make slightly lighter */}
+      <div className="absolute inset-0 bg-black opacity-30 z-5"></div>
 
       {/* Content */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
+      <div className="absolute inset-0 flex items-center justify-center z-20">
         <Container>
-          <h2 
-            className="text-4xl md:text-6xl lg:text-7xl text-white text-center font-extrabold"
-            style={{ fontFamily: "'Sora', sans-serif" }}
-          >
+          <h2 className="text-4xl md:text-6xl lg:text-7xl text-white text-center font-extrabold font-sora">
             {title}
           </h2>
         </Container>
       </div>
-
-      {/* Loading indicator - only show for max 8 seconds */}
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 z-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-        </div>
-      )}
     </div>
   );
 }

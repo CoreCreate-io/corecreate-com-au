@@ -59,24 +59,32 @@ export default defineType({
       group: 'hero',
     }),
     
-    // Example field definition to add to your page schemas
+    // Replace the old featureVideo field with these new fields
+    defineField({
+      name: 'featureVideoEnabled',
+      title: 'Enable Featured Video',
+      type: 'boolean',
+      description: 'Toggle to show a featured video in the hero section',
+      initialValue: false,
+      group: 'hero',
+    }),
+    
     defineField({
       name: 'featureVideo',
       title: 'Feature Video',
-      type: 'file',
-      options: {
-        accept: 'video/*'
-      },
+      type: 'object',
+      description: 'Upload a video to display in the hero section. Will autoplay.',
+      group: 'hero',
       fields: [
-        {
-          name: 'title',
-          title: 'Video Title',
-          type: 'string'
+        { 
+          name: "title", 
+          title: "Video Title", 
+          type: "string" 
         },
         {
-          name: 'caption',
-          title: 'Caption',
-          type: 'string'
+          name: "video",
+          title: "Video file",
+          type: "mux.video"
         }
       ]
     }),

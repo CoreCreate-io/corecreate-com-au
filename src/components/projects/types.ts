@@ -20,11 +20,13 @@ export interface Project {
   featuredImage?: SanityImage;
   featuredVideoEnabled?: boolean;
   featuredVideo?: {
-    asset: {
-      _ref: string;
-      _type: string;
-      url?: string;
-    };
+    title?: string;
+    video?: {
+      asset?: {
+        _id?: string;
+        playbackId?: string;
+      }
+    }
   };
   gallery?: {
     images?: Array<SanityImageWithCaption>;

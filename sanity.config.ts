@@ -10,6 +10,7 @@ import {structureTool} from 'sanity/structure'
 import { pageManagerPlugin, structure } from './src/sanity/plugins/PageManager'
 // Import the singleton plugin
 import { singletonPlugin } from './src/sanity/plugins/singletonPlugin'
+import {muxInput} from 'sanity-plugin-mux-input'
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import {apiVersion, dataset, projectId} from './src/sanity/env'
@@ -32,5 +33,6 @@ export default defineConfig({
     singletonPlugin(),
     
     visionTool({defaultApiVersion: apiVersion}),
+    muxInput(),
   ],
 })

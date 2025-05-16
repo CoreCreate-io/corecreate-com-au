@@ -2,6 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Project } from "../types";
 import { ProjectThumbnailCarousel } from "./ProjectThumbnailCarousel";
+import { MuxVideo } from "./MuxVideo"; // Import our new component
 
 interface ProjectCardProps {
   project: Project;
@@ -9,6 +10,13 @@ interface ProjectCardProps {
 }
 
 export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
+  // Add this debug log to check what video data is coming in
+  console.log("Mux video details:", {
+    title: project.title,
+    enabled: project.featuredVideoEnabled,
+    playbackId: project.featuredVideo?.video?.asset?.playbackId
+  });
+
   return (
     <div 
       className="group relative overflow-hidden rounded-lg cursor-pointer"
@@ -16,16 +24,16 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
     >
       {/* Project Image or Video */}
       <div className="h-80 md:h-110 relative overflow-hidden rounded-lg">
-        {project.featuredVideoEnabled && project.featuredVideo?.asset?.url ? (
-          <video
-            src={project.featuredVideo.asset.url}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="object-cover w-full h-full rounded-lg"
-            style={{ objectFit: "cover" }}
-          />
+        {project.featuredVideoEnabled && project.featuredVideo?.video?.asset?.playbackId ? (
+          <div className="absolute inset-0 overflow-hidden">
+            <MuxVideo
+              playbackId={project.featuredVideo.video.asset.playbackId}
+              title={project.featuredVideo.title}
+              className="w-full h-full"
+              view="card"
+              fitMode="cover"
+            />
+          </div>
         ) : project.featuredImage ? (
           <div className="rounded-lg overflow-hidden w-full h-full">
             <ProjectThumbnailCarousel project={project} />

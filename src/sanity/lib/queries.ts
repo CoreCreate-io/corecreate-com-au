@@ -7,23 +7,28 @@ import { Project, Category } from "@/components/projects/types";
  * Fetch all projects with complete data
  */
 export async function getProjects(): Promise<Project[]> {
-  return await client.fetch(`
-    *[_type == "project"]{
+  return client.fetch(`
+    *[_type == "project"] {
       _id,
       title,
       slug,
       description,
-      "projectField": projectField->{_id, title, slug},
-      "projectSector": projectSector->{_id, title, slug},
-      "subCategories": subCategories[]->{ _id, title, slug },
       featured,
       featuredImage,
       featuredVideoEnabled,
-      featuredVideo{
-        asset->{
-          url
+      "featuredVideo": featuredVideo{
+        title,
+        "video": video{
+          "asset": asset->{
+            _id,
+            playbackId,
+            status
+          }
         }
       },
+      "projectField": projectField->{_id, title, slug},
+      "projectSector": projectSector->{_id, title, slug},
+      "subCategories": subCategories[]->{ _id, title, slug },
       gallery,
       clientInfo
     }
@@ -47,8 +52,14 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
       featuredImage,
       featuredVideoEnabled,
       featuredVideo{
-        asset->{
-          url
+        title,
+        video{
+          asset->{
+            _id,
+            playbackId,
+            status,
+            data
+          }
         }
       },
       gallery,
@@ -159,19 +170,24 @@ export async function getSubcategoriesForField(fieldSlug: string): Promise<Categ
   `, { fieldSlug });
 }
 
+/**
+ * Fetch home page data
+ */
 export async function getHomePage() {
-  return await client.fetch(`
-    *[_type == "homePage"][0]{
-      pageTitle,
-      featureVideo{
-        asset->{
-          url
-        },
-        title,
-        caption
-      },
-      subtitleText,
-      // Other fields...
-    }
-  `);
+  return client.fetch(`*[_type == "homePage"][0]{
+    pageTitle,
+    subtitleText,
+    featureVideoEnabled,
+    "featureVideo": featureVideo{
+      title,
+      "video": video{
+        "asset": asset->{
+          _id,
+          playbackId,
+          status
+        }
+      }
+    },
+    seo
+  }`);
 }

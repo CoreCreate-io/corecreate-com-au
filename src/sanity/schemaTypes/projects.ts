@@ -39,13 +39,21 @@ export default defineType({
 defineField({
   name: 'featuredVideo',
   title: 'Featured Video',
-  type: 'file',
+  type: 'object', // Change from 'document' to 'object'
   description: 'Upload a video to display as the featured cover. Will autoplay.',
-  options: {
-    accept: 'video/*',
-  },
   group: 'media',
-  hidden: ({ parent }) => !parent?.featuredVideoEnabled,
+  fields: [
+    { 
+      name: "title", 
+      title: "Title", 
+      type: "string" 
+    },
+    {
+      name: "video",
+      title: "Video file",
+      type: "mux.video"
+    }
+  ]
 }),
     defineField({
       name: 'featured',
