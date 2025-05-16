@@ -36,6 +36,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [imageOrientations, setImageOrientations] = useState<ImageOrientations>({});
+  const [videoLoaded, setVideoLoaded] = useState(false);
   
   // Detect image orientations for all project images
   useEffect(() => {
@@ -59,13 +60,31 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     });
   }, [projectImages, selectedProject]);
   
-  // Add this to preload project images when drawer opens
+  // Replace your current image preloading with this more efficient approach
   useEffect(() => {
     if (selectedProject && projectImages.length > 0) {
-      // Preload all images
-      projectImages.forEach((image) => {
-        const img = new window.Image();
-        img.src = urlForImage(image).url();
+      // Only preload the first few images
+      const imagesToPreload = projectImages.slice(0, Math.min(2, projectImages.length));
+      
+      // Use Promise.all to preload in parallel with a limit
+      const preloadPromises = imagesToPreload.map((image) => {
+        return new Promise<void>((resolve) => {
+          const img = new window.Image();
+          img.onload = () => resolve();
+          img.onerror = () => resolve(); // Still resolve on error
+          img.src = urlForImage(image).url();
+        });
+      });
+
+      // After first few images load, then load the rest gradually
+      Promise.all(preloadPromises).then(() => {
+        // Progressively load remaining images
+        projectImages.slice(2).forEach((image, i) => {
+          setTimeout(() => {
+            const img = new window.Image();
+            img.src = urlForImage(image).url();
+          }, i * 300); // Stagger loading
+        });
       });
     }
   }, [selectedProject, projectImages]);
@@ -87,6 +106,17 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     };
   }, []);
   
+  // Delay video loading
+  useEffect(() => {
+    if (selectedProject?.featuredVideoEnabled) {
+      // Delay video loading until after drawer animation
+      const timer = setTimeout(() => {
+        setVideoLoaded(true);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedProject]);
 
   // Helper function to get aspect ratio class and object fit based on orientation
   const getImageStyles = (imageKey: string) => {
@@ -113,13 +143,13 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
 
   return (
 <Drawer 
-  open={selectedProject !== null} 
+  open={selectedProject !== null && !isClosing} 
   onOpenChange={(open) => {
-    // Only handle close events from UI interactions, and only if not already closing
+    // Only handle close events initiated by the drawer UI
     if (!open && selectedProject !== null && !isClosing) {
       setSelectedProject(null);
     }
-    // Never handle open events - let the parent component control opening
+    // Never handle drawer-initiated open events
   }}
 >
       <DrawerContent className="drawer-override">
@@ -174,17 +204,23 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             {/* Featured Video or Image */}
             {selectedProject?.featuredVideoEnabled && selectedProject.featuredVideo?.video?.asset?.playbackId ? (
               <div className="relative w-full aspect-video bg-black">
-                <MuxVideo
-                  playbackId={selectedProject.featuredVideo.video.asset.playbackId}
-                  className="w-full h-full"
-                  controls={true}
-                  autoplay={true}
-                  loop={false}
-                  muted={false}
-                  controlsStyle="minimal"
-                  view="drawer"
-                  fitMode="contain"
-                />
+                {videoLoaded ? (
+                  <MuxVideo
+                    playbackId={selectedProject.featuredVideo.video.asset.playbackId}
+                    className="w-full h-full"
+                    controls={true}
+                    autoplay={true}
+                    loop={false}
+                    muted={false}
+                    controlsStyle="minimal"
+                    view="drawer"
+                    fitMode="contain"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-10 h-10 border-t-2 border-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                )}
               </div>
             ) : projectImages.length > 0 && (
               <div className={`${isMobile ? 'mb-1' : 'mb-6'}`}>

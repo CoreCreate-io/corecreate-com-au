@@ -117,8 +117,6 @@ export default function FeatureVideo({
             '--stalled-retry-count': '3',
             position: 'absolute',
             inset: 0,
-            opacity: isLoaded && !isBuffering ? 1 : 0.3, // Fade in when loaded
-            transition: 'opacity 1s ease-in-out',
           } as React.CSSProperties}
           metadata={{ video_title: title }}
           envKey={process.env.NEXT_PUBLIC_MUX_ENV_KEY}

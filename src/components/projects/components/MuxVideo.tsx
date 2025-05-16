@@ -1,7 +1,7 @@
 'use client'
 
 import MuxPlayer from '@mux/mux-player-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface MuxVideoProps {
   playbackId: string;
@@ -31,8 +31,27 @@ export function MuxVideo({
   priority = false
 }: MuxVideoProps) {
   const [isBuffering, setIsBuffering] = useState(true);
+  const [shouldRender, setShouldRender] = useState(view === 'card'); // Only render cards immediately
   
-  if (!playbackId) return null;
+  // Delay drawer video initialization to improve performance
+  useEffect(() => {
+    if (view === 'drawer') {
+      const timer = setTimeout(() => {
+        setShouldRender(true);
+      }, 300); // Short delay to let drawer animation complete
+      
+      return () => clearTimeout(timer);
+    }
+  }, [view]);
+  
+  if (!playbackId || !shouldRender) {
+    // Show a placeholder while waiting to render the video
+    return view === 'drawer' ? (
+      <div className="w-full h-full flex items-center justify-center bg-black">
+        <div className="w-10 h-10 border-t-2 border-blue-500 rounded-full animate-spin"></div>
+      </div>
+    ) : null;
+  }
 
   // Determine object-fit mode
   let objectFit = 'cover';
@@ -75,9 +94,8 @@ export function MuxVideo({
         autoPlay={autoplay}
         muted={muted}
         loop={loop}
-        // Removed controls prop - it's not accepted by MuxPlayer
         thumbnailTime={0}
-        preload="auto"
+        preload={view === 'drawer' ? "metadata" : "auto"} // Just load metadata first for drawer videos
         className={`${className} ${view === 'card' ? 'mux-card' : 'mux-drawer'}`}
         onLoadStart={() => setIsBuffering(true)}
         onCanPlay={() => setIsBuffering(false)}
@@ -88,7 +106,6 @@ export function MuxVideo({
           width: view === 'card' ? '100%' : 'auto',
           minWidth: '100%', 
           objectFit: objectFit,
-          // This is the correct way to control the controls display
           '--controls': controls ? controlsConfig : 'none',
           '--media-object-fit': objectFit,
           '--media-object-position': objectPosition,
@@ -103,7 +120,7 @@ export function MuxVideo({
           '--bottom-play-button-right': 'auto',
           '--bottom-play-button-left': '8px',
           '--bottom-play-button-bottom': '8px',
-          '--stalled-retry-timeout': '0',
+          '--stalled-retry-timeout': '30000', // Increase from 0 to prevent constant retries
           '--stalled-retry-count': '3',
           opacity: isBuffering && view !== 'card' ? '0.7' : '1',
         } as React.CSSProperties}
