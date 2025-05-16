@@ -13,13 +13,13 @@ export function getAllProjectImages(project: Project | null) {
     images.push(project.featuredImage);
   }
   
-  // Add gallery images if they exist
-  // The gallery is structured as project.gallery.images in the Sanity schema
-  if (project.gallery?.images && Array.isArray(project.gallery.images)) {
-    project.gallery.images.forEach(item => {
-      if (item) images.push(item);
+  // Add gallery images if they exist - handle the correct structure
+  if (project.gallery && project.gallery.images && Array.isArray(project.gallery.images)) {
+    project.gallery.images.forEach(img => {
+      if (img) images.push(img);
     });
   }
   
+  console.log("Extracted images:", images.length);
   return images;
 }

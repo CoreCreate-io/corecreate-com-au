@@ -3,16 +3,14 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { urlForImage } from "@/lib/image";
 import { Project } from "../types";
-import dynamic from 'next/dynamic'
-
-// Use dynamic import with loading fallback
-const ProjectDrawer = dynamic(
-  () => import('@/components/projects/ui/ProjectDrawer'),
-  { loading: () => <div>Loading...</div> }
-)
 
 export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
-  // Collect images first
+  // This is fine as it's just a variable, not a hook
+  const hasFeaturedVideo = project.featuredVideoEnabled === true && project.featuredVideo?.asset?.url;
+  
+  // ALWAYS declare ALL hooks at the top level, regardless of conditions
+  
+  // Image collection - must be at top level
   const projectImages = React.useMemo(() => {
     const images = [];
     if (project.featuredImage) {
@@ -24,7 +22,7 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     return images;
   }, [project]);
 
-  // State hooks
+  // All state hooks at top level
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [showControls, setShowControls] = useState(false);
@@ -32,7 +30,7 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   const [isHorizontalSwiping, setIsHorizontalSwiping] = useState(false);
   const interval = 5000;
   
-  // Ref hooks
+  // All ref hooks at top level
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const slideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -41,7 +39,7 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
   const isMobile = useRef(false);
   const touchMoved = useRef(false);
   
-  // Clear timers function
+  // All callback hooks at top level
   const clearTimers = useCallback(() => {
     if (progressTimerRef.current) {
       clearInterval(progressTimerRef.current);
@@ -53,8 +51,11 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     }
   }, []);
     
-  // Start progress function
+  // Start progress function - at top level, but can have early returns inside
   const startProgress = useCallback(() => {
+    // It's fine to have early returns inside callback bodies
+    if (hasFeaturedVideo || projectImages.length <= 1) return;
+    
     clearTimers();
     const progressInterval = 50;
     const progressIncrement = (progressInterval / interval) * 100;
@@ -69,7 +70,7 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
               const newIndex = (currentIdx + 1) % projectImages.length;
               setCurrentIndex(newIndex);
               setProgress(0);
-              startProgress(); // Restart progress for the new slide
+              startProgress();
               slideTimerRef.current = null;
             }, 50);
           }
@@ -78,9 +79,9 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
         return next;
       });
     }, progressInterval);
-  }, [clearTimers, interval, currentIndex, projectImages.length]);
-    
-  // Update slide function
+  }, [clearTimers, interval, currentIndex, projectImages.length, hasFeaturedVideo]);
+  
+  // All other callbacks at top level
   const updateSlide = useCallback((newIndex: number) => {
     clearTimers();
     setCurrentIndex(newIndex);
@@ -88,7 +89,6 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     startProgress();
   }, [clearTimers, startProgress]);
     
-  // Next and prev slide functions
   const nextSlide = useCallback(() => {
     const newIndex = (currentIndex + 1) % projectImages.length;
     updateSlide(newIndex);
@@ -99,52 +99,19 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     updateSlide(newIndex);
   }, [currentIndex, projectImages.length, updateSlide]);
 
-  // Effect for progress bar
-  useEffect(() => {
-    clearTimers();
-    
-    if (isPaused || projectImages.length <= 1) return;
-    
-    const progressInterval = 50;
-    const progressIncrement = (progressInterval / interval) * 100;
-    
-    progressTimerRef.current = setInterval(() => {
-      setProgress(prev => {
-        const next = prev + progressIncrement;
-        if (next >= 100) {
-          if (!slideTimerRef.current) {
-            slideTimerRef.current = setTimeout(() => {
-              nextSlide();
-              slideTimerRef.current = null;
-            }, 50);
-          }
-          return 100;
-        }
-        return next;
-      });
-    }, progressInterval);
-    
-    return clearTimers;
-  }, [clearTimers, isPaused, interval, nextSlide, projectImages.length]);
-
-  // Mobile detection
-  useEffect(() => {
-    isMobile.current = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  }, []);
-
-  // Touch handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
+  // Handle touch events
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].pageY;
+    touchStartY.current = e.touches[0].clientY;
     savedScrollPosition.current = window.scrollY;
     touchMoved.current = false;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
+  }, []);
+  
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!touchStartX.current || !touchStartY.current) return;
     
     const touchEndX = e.touches[0].clientX;
-    const touchEndY = e.touches[0].pageY;
+    const touchEndY = e.touches[0].clientY;
     const diffX = touchStartX.current - touchEndX;
     const diffY = touchStartY.current - touchEndY;
     
@@ -166,30 +133,85 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
         touchStartY.current = null;
       }
     }
-  };
-
-  const handleTouchEnd = () => { 
-    touchStartX.current = null;
-    touchStartY.current = null;
+  }, [nextSlide, prevSlide, isHorizontalSwiping]);
+  
+  const handleTouchEnd = useCallback(() => {
     setIsHorizontalSwiping(false);
-  };
+  }, []);
 
-  // Get adjacent indices for preloading
+  // Effects always at top level too
+  useEffect(() => {
+    // It's fine to have early returns inside effect bodies
+    if (hasFeaturedVideo || projectImages.length <= 1 || isPaused) return;
+    
+    clearTimers();
+    
+    const progressInterval = 50;
+    const progressIncrement = (progressInterval / interval) * 100;
+    
+    progressTimerRef.current = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + progressIncrement;
+        if (next >= 100) {
+          if (!slideTimerRef.current) {
+            slideTimerRef.current = setTimeout(() => {
+              nextSlide();
+              slideTimerRef.current = null;
+            }, 50);
+          }
+          return 100;
+        }
+        return next;
+      });
+    }, progressInterval);
+    
+    return clearTimers;
+  }, [clearTimers, isPaused, interval, nextSlide, projectImages.length, hasFeaturedVideo]);
+
+  // Mobile detection effect - always at top level
+  useEffect(() => {
+    const checkMobile = () => {
+      isMobile.current = window.innerWidth < 768;
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  // Calculate adjacent indices for preloading
   const getAdjacentIndices = useCallback(() => {
     const prev = (currentIndex - 1 + projectImages.length) % projectImages.length;
     const next = (currentIndex + 1) % projectImages.length;
     return { prev, next };
   }, [currentIndex, projectImages.length]);
 
+  // NOW we can conditionally render based on our variables
+  if (hasFeaturedVideo) {
+    return (
+      <div className="w-full h-full relative rounded-lg overflow-hidden">
+        <video
+          src={project.featuredVideo?.asset?.url}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          disablePictureInPicture
+          controlsList="nodownload"
+        />
+      </div>
+    );
+  }
+  
   // Return single image if only one exists
   if (projectImages.length <= 1) {
-    // Instead of directly using featuredImage (which might be undefined),
-    // use the first image from projectImages array which is guaranteed to exist
     const imageToShow = projectImages[0];
     
-    // Check if we have an image to display
     if (!imageToShow) {
-      // Fallback if somehow there are no images
       return (
         <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
           <p className="text-gray-500">No image</p>
@@ -198,17 +220,18 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
     }
     
     return (
-      <Image
-        src={urlForImage(imageToShow).url()}
-        alt={project.title}
-        fill
-        priority={false}
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
-      />
+      <div className="w-full h-full relative">
+        <Image
+          src={urlForImage(imageToShow).url()}
+          alt={project.title || "Project image"}
+          fill
+          className="object-cover"
+        />
+      </div>
     );
   }
-
-  // Complete component rendering with carousel
+  
+  // Full carousel for multiple images
   return (
     <div 
       className="w-full h-full relative select-none rounded-lg overflow-hidden"
@@ -216,48 +239,8 @@ export const ProjectThumbnailCarousel = ({ project }: { project: Project }) => {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onMouseEnter={() => {
-        if (!isMobile.current) {
-          setIsPaused(true);
-          setShowControls(true);
-        }
-      }}
-      onMouseLeave={() => {
-        if (!isMobile.current) {
-          setIsPaused(false);
-          setShowControls(false);
-          // Reset progress for the current slide when mouse leaves
-          if (progressTimerRef.current) {
-            clearInterval(progressTimerRef.current);
-            progressTimerRef.current = null;
-            
-            setProgress(0);
-            
-            setTimeout(() => {
-              if (!isPaused) {
-                const progressInterval = 50;
-                const progressIncrement = (progressInterval / interval) * 100;
-                
-                progressTimerRef.current = setInterval(() => {
-                  setProgress(prev => {
-                    const next = prev + progressIncrement;
-                    if (next >= 100) {
-                      if (!slideTimerRef.current) {
-                        slideTimerRef.current = setTimeout(() => {
-                          nextSlide();
-                          slideTimerRef.current = null;
-                        }, 50);
-                      }
-                      return 100;
-                    }
-                    return next;
-                  });
-                }, progressInterval);
-              }
-            }, 100);
-          }
-        }
-      }}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
     >
       {/* Arrow controls for desktop */}
       {showControls && !isMobile.current && projectImages.length > 1 && (

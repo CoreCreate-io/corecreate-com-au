@@ -38,41 +38,23 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
   
   // Detect image orientations for all project images
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
-    
     if (!selectedProject || projectImages.length === 0) return;
 
-    // Now safe to use window.Image
+    // Pre-load images to detect dimensions
     projectImages.forEach((image, i) => {
-      if (!image) return; // Skip undefined images
-      
       const imgKey = `img-${i}`;
-      try {
-        // Use window.Image explicitly to avoid conflict with Next.js Image component
-        const img = new window.Image();
-        const imageUrl = urlForImage(image).url();
-        
-        img.onload = () => {
-          setImageOrientations(prev => ({
-            ...prev,
-            [imgKey]: img.height > img.width ? 'portrait' : 'landscape'
-          }));
-        };
-        
-        img.onerror = () => {
-          console.error(`Failed to load image ${i}`);
-          // Set a default orientation
-          setImageOrientations(prev => ({
-            ...prev,
-            [imgKey]: 'landscape'
-          }));
-        };
-        
-        img.src = imageUrl;
-      } catch (error) {
-        console.error(`Error loading image ${i}:`, error);
-      }
+      // Use window.Image explicitly to avoid conflict with Next.js Image component
+      const img = new window.Image();
+      const imageUrl = urlForImage(image).url();
+      
+      img.onload = () => {
+        setImageOrientations(prev => ({
+          ...prev,
+          [imgKey]: img.height > img.width ? 'portrait' : 'landscape'
+        }));
+      };
+      
+      img.src = imageUrl;
     });
   }, [projectImages, selectedProject]);
   
