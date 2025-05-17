@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { urlForImage } from "@/lib/image";
+import { urlForImage } from "@/sanity/lib/image";
 import { SanityImage, SanityImageWithCaption } from "../../types";
 import {
   Carousel,

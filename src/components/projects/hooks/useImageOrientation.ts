@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { urlForImage } from "@/lib/image";
+import { urlForImage } from "@/sanity/lib/image";
 import { SanityImage, SanityImageWithCaption } from "../types";
 
 interface ImageOrientations {

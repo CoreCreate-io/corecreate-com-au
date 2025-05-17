@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { urlForImage } from "@/lib/image";
+import { urlForImage } from "@/sanity/lib/image";
 import { Project } from "../types";
 import dynamic from 'next/dynamic'
 

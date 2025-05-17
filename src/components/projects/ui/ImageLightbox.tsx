@@ -3,7 +3,7 @@ import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { urlForImage } from "@/lib/image";
+import { urlForImage } from "@/sanity/lib/image";
 import { Project, SanityImage, SanityImageWithCaption } from "../types";
 import "../ProjectsOverride.css";
 

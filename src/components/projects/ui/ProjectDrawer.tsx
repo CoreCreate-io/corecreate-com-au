@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerClose } from "@/components/ui/drawer";
-import { urlForImage } from "@/lib/image";
+import { urlForImage } from "@/sanity/lib/image";
 import { Project, SanityImage, SanityImageWithCaption } from "../types";
 import { VideoPlayer } from "../components/DrawerVideoPlayer";
 import { GalleryRenderer } from "../components/gallery/GalleryRenderer";

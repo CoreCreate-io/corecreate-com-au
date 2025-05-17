@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Container } from "@/components/layout/container";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Category } from "../types";
-import { urlForImage } from "@/lib/image";
+import { urlForImage } from "@/sanity/lib/image";
 
 // Update your props interface
 interface SearchFiltersProps {
