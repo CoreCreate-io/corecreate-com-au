@@ -1,41 +1,24 @@
 // Create a reusable hook for this
 import { useEffect, useState } from 'react';
 
-export function useIsMobile(breakpoint = 768) {
+export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
   
   useEffect(() => {
-    // Check if running in the browser
-    if (typeof window === 'undefined') return;
-    
-    // Use a debounced resize handler with requestAnimationFrame
-    let rafId: number | null = null;
-    
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint);
-    };
-    
-    const handleResize = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      
-      rafId = requestAnimationFrame(() => {
-        checkMobile();
-        rafId = null;
-      });
+      setIsMobile(window.innerWidth < 768);
     };
     
     // Initial check
     checkMobile();
     
-    // Add listener
-    window.addEventListener('resize', handleResize);
+    // Listen for window resize
+    window.addEventListener('resize', checkMobile);
     
-    // Clean up
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', checkMobile);
     };
-  }, [breakpoint]);
+  }, []);
   
   return isMobile;
 }

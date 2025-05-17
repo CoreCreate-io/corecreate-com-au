@@ -2,7 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Project } from "../types";
 import { ProjectThumbnailCarousel } from "./ProjectThumbnailCarousel";
-import MuxPlayer from '@mux/mux-player-react';
+import { CardVideoPlayer } from "./CardVideoPlayer"; // Import the specialized component
 
 interface ProjectCardProps {
   project: Project;
@@ -18,28 +18,10 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       {/* Project Image or Video */}
       <div className="h-80 md:h-110 relative overflow-hidden rounded-lg">
         {project.featuredVideoEnabled && project.featuredVideo?.video?.asset?.playbackId ? (
-          <div className="absolute inset-0 overflow-hidden">
-            <MuxPlayer
-              playbackId={project.featuredVideo.video.asset.playbackId}
-              metadata={{ video_title: project.title }}
-              streamType="on-demand"
-              className="w-full h-full"
-              autoPlay={true}
-              loop={true}
-              muted={true}
-              thumbnailTime={0}
-              preload="auto"
-              style={{
-                height: '100%',
-                width: '100%',
-                objectFit: 'cover',
-                '--controls': 'none',
-                '--media-object-fit': 'cover',
-                pointerEvents: 'auto',
-                zIndex: 10,
-              }}
-            />
-          </div>
+          <CardVideoPlayer 
+            playbackId={project.featuredVideo.video.asset.playbackId}
+            title={project.title}
+          />
         ) : project.featuredImage ? (
           <div className="rounded-lg overflow-hidden w-full h-full">
             <ProjectThumbnailCarousel project={project} />
