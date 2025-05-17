@@ -147,3 +147,122 @@
     font-family: var(--font-manrope);
   }
 }
+
+
+/* Navigation Menu Custom Styling */
+
+/* Navigation Menu Trigger styling */
+.NavigationMenuTrigger {
+  @apply text-white hover:text-[#BAFF00] bg-transparent data-[state=open]:bg-[#111111] data-[state=open]:text-[#BAFF00];
+}
+
+/* Override default hover behavior */
+.NavigationMenuTrigger:hover {
+  @apply bg-[#111111] text-[#BAFF00];
+}
+
+/* Make sure focus states follow the same styling */
+.NavigationMenuTrigger:focus {
+  @apply bg-[#111111] text-[#BAFF00];
+}
+
+/* Active state when menu is open */
+.NavigationMenuTrigger[data-state="open"] {
+  @apply bg-[#111111] text-[#BAFF00];
+}
+
+/* NavigationMenuContent styling - the dropdown box */
+.NavigationMenuContent {
+  @apply bg-[#111111] border border-[#222222];
+}
+
+/* Hover state for menu items inside the dropdown */
+.NavigationMenuContent a:hover {
+  @apply bg-[#222222] text-[#BAFF00];
+}
+
+/* Selected state */
+.NavigationMenuLink[data-selected="true"] {
+  @apply text-[#BAFF00];
+}
+
+/* Make all navigation menu links have the same hover behavior */
+.NavigationMenuLink:hover {
+  @apply text-[#BAFF00];
+}
+
+/* Mobile menu animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Apply animations to drawer elements */
+.mobile-menu-item {
+  animation: slideUp 0.3s forwards;
+  opacity: 0;
+}
+
+/* Mobile drawer animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
+}
+
+/* Animation delays for staggered entrances */
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-350 {
+  animation-delay: 350ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+.animation-delay-450 {
+  animation-delay: 450ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+.animation-delay-550 {
+  animation-delay: 550ms;
+}
+
+.animation-delay-600 {
+  animation-delay: 600ms;
+}
