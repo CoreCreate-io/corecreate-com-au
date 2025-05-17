@@ -3,6 +3,7 @@ import { Manrope, Sora, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
+import { Header } from '@/components/common/main/Header/Header';
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -36,7 +37,8 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
       </head>
       <body className={`${manrope.variable} ${sora.variable} ${geistMono.variable} antialiased`}>
-        {children}
+        <Header />
+        <main>{children}</main>
         <SpeedInsights />
         <Analytics/>
       </body>
