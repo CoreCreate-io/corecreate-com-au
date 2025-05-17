@@ -258,3 +258,63 @@ div[role="dialog"] .cc-lightbox-container {
   line-height: 1.2;
 }
 
+/* Add to your ProjectsOverride.css */
+
+/* Fix Mux player interaction issues on desktop */
+mux-player {
+  pointer-events: auto !important;
+  position: relative;
+}
+
+/* MuxPlayer color customizations */
+.mux-player-override {
+  --primary-color: #BAFF00 !important;
+  --accent-color: #BAFF00 !important;
+  --_primary-color: #BAFF00 !important;
+  --_accent-color: #BAFF00 !important;
+  --media-range-bar-color: #BAFF00 !important;
+  --media-time-range-buffered-color: rgba(186, 255, 0, 0.5) !important;
+  --media-range-thumb-background: radial-gradient(circle, #000 0%, #000 25%, #BAFF00 25%, #BAFF00) !important;
+}
+
+/* Target the shadow DOM elements */
+mux-player::part(media-time-range),
+mux-player::part(range-track),
+mux-player::part(range-track-fill) {
+  --media-range-bar-color: #BAFF00 !important;
+  --media-time-range-buffered-color: rgba(186, 255, 0, 0.5) !important;
+}
+
+/* Ensure video container doesn't block interactions */
+.aspect-video {
+  position: relative;
+  isolation: isolate;
+  background-color:white;
+}
+
+/* Fix issues with drawer overlay capturing clicks */
+[data-vaul-drawer-overlay],
+[data-vaul-drawer-content] {
+  pointer-events: auto !important;
+}
+
+/* Make sure drawer content allows interaction with children */
+.drawer-container-override {
+  pointer-events: auto !important;
+}
+
+/* Ensure controls are accessible */
+mux-player::part(controls) {
+  pointer-events: auto !important;
+}
+
+/* Fix for desktop mouse interactions specifically */
+@media (min-width: 768px) {
+  .aspect-video, mux-player {
+    isolation: isolate;
+  }
+  
+  .aspect-video * {
+    pointer-events: auto !important;
+  }
+}

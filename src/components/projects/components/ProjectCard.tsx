@@ -2,7 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Project } from "../types";
 import { ProjectThumbnailCarousel } from "./ProjectThumbnailCarousel";
-import { MuxVideo } from "./MuxVideo"; // Import our new component
+import MuxPlayer from '@mux/mux-player-react';
 
 interface ProjectCardProps {
   project: Project;
@@ -10,13 +10,6 @@ interface ProjectCardProps {
 }
 
 export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
-  // Add this debug log to check what video data is coming in
-  console.log("Mux video details:", {
-    title: project.title,
-    enabled: project.featuredVideoEnabled,
-    playbackId: project.featuredVideo?.video?.asset?.playbackId
-  });
-
   return (
     <div 
       className="group relative overflow-hidden rounded-lg cursor-pointer"
@@ -26,12 +19,25 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       <div className="h-80 md:h-110 relative overflow-hidden rounded-lg">
         {project.featuredVideoEnabled && project.featuredVideo?.video?.asset?.playbackId ? (
           <div className="absolute inset-0 overflow-hidden">
-            <MuxVideo
+            <MuxPlayer
               playbackId={project.featuredVideo.video.asset.playbackId}
-              title={project.featuredVideo.title}
+              metadata={{ video_title: project.title }}
+              streamType="on-demand"
               className="w-full h-full"
-              view="card"
-              fitMode="cover"
+              autoPlay={true}
+              loop={true}
+              muted={true}
+              thumbnailTime={0}
+              preload="auto"
+              style={{
+                height: '100%',
+                width: '100%',
+                objectFit: 'cover',
+                '--controls': 'none',
+                '--media-object-fit': 'cover',
+                pointerEvents: 'auto',
+                zIndex: 10,
+              }}
             />
           </div>
         ) : project.featuredImage ? (
@@ -44,7 +50,7 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
           </div>
         )}
       </div>
-  
+      
       {/* Project Info */}
       <div className="mt-3">
         <div className="text-xs uppercase tracking-wide text-muted-foreground">

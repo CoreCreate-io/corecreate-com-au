@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image"; // This import is shadowing the global Image constructor
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,19 @@ import {
 } from "@/components/ui/drawer";
 import { urlForImage } from "@/lib/image";
 import { Project, SanityImage, SanityImageWithCaption } from "../types";
-import { MuxVideo } from "../components/MuxVideo";
+import MuxPlayer from '@mux/mux-player-react';
+import { useSwipeable } from 'react-swipeable'; // You might need to install this: npm install react-swipeable
+
+// Track image orientations
+interface ImageOrientations {
+  [key: string]: 'portrait' | 'landscape' | 'unknown';
+}
+
+// Add this interface to support the display mode
+interface GalleryOptions {
+  display: 'stacked' | 'grid' | 'carousel' | 'masonry';
+  zoom?: boolean;
+}
 
 interface ProjectDrawerProps {
   selectedProject: Project | null;
@@ -19,11 +31,6 @@ interface ProjectDrawerProps {
   setCurrentImageIndex: (index: number) => void;
   setLightboxOpen: (open: boolean) => void;
   isClosing?: boolean; // Add this prop
-}
-
-// Track image orientations
-interface ImageOrientations {
-  [key: string]: 'portrait' | 'landscape' | 'unknown';
 }
 
 const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
@@ -37,6 +44,12 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [imageOrientations, setImageOrientations] = useState<ImageOrientations>({});
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  
+  // Get display mode from project
+  const galleryDisplay = selectedProject?.gallery?.display || 'stacked';
+  const enableZoom = selectedProject?.gallery?.zoom !== false;
   
   // Detect image orientations for all project images
   useEffect(() => {
@@ -141,6 +154,232 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     };
   };
 
+  // For carousel navigation
+  const handlePrevious = useCallback(() => {
+    if (currentCarouselIndex > 0) {
+      setCurrentCarouselIndex(prev => prev - 1);
+    }
+  }, [currentCarouselIndex]);
+
+  const handleNext = useCallback(() => {
+    if (currentCarouselIndex < projectImages.length - 2) { // -2 because we slice(1)
+      setCurrentCarouselIndex(prev => prev + 1);
+    }
+  }, [currentCarouselIndex, projectImages.length]);
+
+  // Swipe handlers for carousel
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => handleNext(),
+    onSwipedRight: () => handlePrevious(),
+    trackMouse: true
+  });
+
+  // Update carousel position when index changes
+  useEffect(() => {
+    if (galleryDisplay === 'carousel' && carouselRef.current) {
+      carouselRef.current.scrollTo({
+        left: currentCarouselIndex * carouselRef.current.offsetWidth,
+        behavior: 'smooth'
+      });
+    }
+  }, [currentCarouselIndex, galleryDisplay]);
+  
+  // Add these render functions before the return statement
+  const renderStacked = () => (
+    <div className={`flex flex-col ${isMobile ? 'space-y-1' : 'space-y-4'}`}>
+      {projectImages.slice(1).map((image, index) => {
+        const imageWithCaption = image as SanityImageWithCaption;
+        const imageKey = `img-${index + 1}`;
+        const styles = getImageStyles(imageKey);
+        
+        return (
+          <div 
+            key={index}
+            className="relative cursor-pointer"
+            onClick={() => {
+              setCurrentImageIndex(index + 1);
+              setLightboxOpen(true);
+            }}
+          >
+            <div className={`relative ${styles.aspect}`}>
+              <Image
+                src={urlForImage(image).url()}
+                alt={imageWithCaption.caption || `Project image ${index + 2}`}
+                width={1200}
+                height={800}
+                className={`w-full h-auto ${isMobile ? '' : 'rounded-md'}`}
+                sizes="100vw"
+                priority={index < 3}
+                loading={index < 3 ? "eager" : "lazy"}
+              />
+            </div>
+            
+            {imageWithCaption.caption && (
+              <p className={`text-sm text-muted-foreground mt-1 ${isMobile ? 'px-4 pb-1' : ''}`}>
+                {imageWithCaption.caption}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderGrid = () => (
+    <div className={`grid grid-cols-1 md:grid-cols-2 ${isMobile ? 'gap-1' : 'gap-4'}`}>
+      {projectImages.slice(1).map((image, index) => {
+        const imageWithCaption = image as SanityImageWithCaption;
+        const imageKey = `img-${index + 1}`;
+        const styles = getImageStyles(imageKey);
+        
+        return (
+          <div 
+            key={index}
+            className="relative cursor-pointer"
+            onClick={() => {
+              setCurrentImageIndex(index + 1);
+              setLightboxOpen(true);
+            }}
+          >
+            <div className={`relative ${styles.aspect}`}>
+              <Image
+                src={urlForImage(image).url()}
+                alt={imageWithCaption.caption || `Project image ${index + 2}`}
+                width={800}
+                height={600}
+                className={`w-full h-auto ${isMobile ? '' : 'rounded-md'}`}
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={index < 2}
+                loading={index < 2 ? "eager" : "lazy"}
+              />
+            </div>
+            
+            {imageWithCaption.caption && (
+              <p className="text-sm text-muted-foreground mt-1 truncate">
+                {imageWithCaption.caption}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderCarousel = () => (
+    <div className="relative">
+      <div 
+        ref={carouselRef}
+        className={`flex overflow-x-hidden snap-x snap-mandatory ${isMobile ? 'gap-1' : 'gap-4'}`}
+        {...swipeHandlers}
+      >
+        {projectImages.slice(1).map((image, index) => {
+          const imageWithCaption = image as SanityImageWithCaption;
+          
+          return (
+            <div 
+              key={index}
+              className="relative min-w-full flex-shrink-0 snap-center cursor-pointer"
+              onClick={() => {
+                setCurrentImageIndex(index + 1);
+                setLightboxOpen(true);
+              }}
+            >
+              <div className="relative aspect-[16/9]">
+                <Image
+                  src={urlForImage(image).url()}
+                  alt={imageWithCaption.caption || `Project image ${index + 2}`}
+                  width={1200}
+                  height={800}
+                  className={`w-full h-auto object-contain ${isMobile ? '' : 'rounded-md'}`}
+                  sizes="100vw"
+                  priority={index === currentCarouselIndex}
+                />
+              </div>
+              
+              {imageWithCaption.caption && (
+                <p className="text-sm text-center text-muted-foreground mt-2">
+                  {imageWithCaption.caption}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Carousel controls */}
+      {projectImages.length > 2 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); handlePrevious(); }}
+            className={`absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 rounded-full p-2 
+            ${currentCarouselIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'opacity-100'}`}
+            disabled={currentCarouselIndex === 0}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleNext(); }}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 rounded-full p-2 
+            ${currentCarouselIndex >= projectImages.length - 2 ? 'opacity-50 cursor-not-allowed' : 'opacity-100'}`}
+            disabled={currentCarouselIndex >= projectImages.length - 2}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </>
+      )}
+      
+      {/* Pagination dots */}
+      {projectImages.length > 2 && (
+        <div className="flex justify-center mt-4 gap-1.5">
+          {projectImages.slice(1).map((_, index) => (
+            <button
+              key={index}
+              className={`h-2 rounded-full transition-all ${
+                currentCarouselIndex === index ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30'
+              }`}
+              onClick={(e) => { e.stopPropagation(); setCurrentCarouselIndex(index); }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderMasonry = () => (
+    <div className={`columns-1 md:columns-2 lg:columns-3 ${isMobile ? 'gap-1' : 'gap-4'}`}>
+      {projectImages.slice(1).map((image, index) => {
+        const imageWithCaption = image as SanityImageWithCaption;
+        
+        return (
+          <div 
+            key={index}
+            className={`relative ${isMobile ? 'mb-1' : 'mb-4'} break-inside-avoid cursor-pointer`}
+            onClick={() => {
+              setCurrentImageIndex(index + 1);
+              setLightboxOpen(true);
+            }}
+          >
+            <Image
+              src={urlForImage(image).url()}
+              alt={imageWithCaption.caption || `Project image ${index + 2}`}
+              width={800}
+              height={600}
+              className={`w-full h-auto ${isMobile ? '' : 'rounded-md'}`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              priority={index < 3}
+            />
+            
+            {imageWithCaption.caption && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {imageWithCaption.caption}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+  
   return (
 <Drawer 
   open={selectedProject !== null && !isClosing} 
@@ -203,18 +442,33 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             
             {/* Featured Video or Image */}
             {selectedProject?.featuredVideoEnabled && selectedProject.featuredVideo?.video?.asset?.playbackId ? (
-              <div className="relative w-full aspect-video bg-black">
+              <div className="relative w-full aspect-video bg-black"
+                   onClick={(e) => e.stopPropagation()}
+                   onMouseDown={(e) => e.stopPropagation()}
+                   onMouseUp={(e) => e.stopPropagation()}
+                   onPointerDown={(e) => e.stopPropagation()}
+                   style={{ isolation: 'isolate', position: 'relative', zIndex: 20 }} // Add these
+              >
                 {videoLoaded ? (
-                  <MuxVideo
+                  <MuxPlayer
                     playbackId={selectedProject.featuredVideo.video.asset.playbackId}
-                    className="w-full h-full"
-                    controls={true}
-                    autoplay={true}
+                    metadata={{ video_title: selectedProject.title }}
+                    className="w-full h-full mux-player-override" // Add class for targeting in CSS
+                    autoPlay={true}
                     loop={false}
                     muted={false}
-                    controlsStyle="minimal"
-                    view="drawer"
-                    fitMode="contain"
+                    defaultShowControls={true}
+                    defaultHiddenCaptions={true}
+                    thumbnailTime={0}
+                    preload="auto"
+                    accentColor="#BAFF00"  // Add this line
+                    style={{
+                      height: '100%',
+                      width: '100%',
+                      objectFit: 'contain',
+                      pointerEvents: 'auto !important', // Add !important
+                      touchAction: 'auto', // Improve touch handling
+                    }}
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -222,81 +476,52 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                   </div>
                 )}
               </div>
-            ) : projectImages.length > 0 && (
-              <div className={`${isMobile ? 'mb-1' : 'mb-6'}`}>
-                <div 
-                  className="relative w-full cursor-pointer"
-                  onClick={() => {
-                    setCurrentImageIndex(0);
-                    setLightboxOpen(true);
-                  }}
-                >
-                  {/* Dynamic styling based on image orientation */}
-                  {(() => {
-                    const styles = getImageStyles('img-0');
-                    return (
-                      <div className={`relative ${styles.aspect}`}>
-                        <Image
-                          src={urlForImage(projectImages[0]).url()}
-                          alt={selectedProject?.title || "Project featured image"}
-                          width={1200}
-                          height={800}
-                          className="w-full h-auto"
-                          sizes="100vw"
-                          priority
-                        />
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
+                ) : projectImages.length > 0 && (
+                  <div className={`${isMobile ? 'mb-1' : 'mb-6'}`}>
+                    <div 
+                      className="relative w-full cursor-pointer"
+                      onClick={() => {
+                        setCurrentImageIndex(0);
+                        setLightboxOpen(true);
+                      }}
+                    >
+                      {/* Dynamic styling based on image orientation */}
+                      {(() => {
+                        const styles = getImageStyles('img-0');
+                        return (
+                          <div className={`relative ${styles.aspect}`}>
+                            <Image
+                              src={urlForImage(projectImages[0]).url()}
+                              alt={selectedProject?.title || "Project featured image"}
+                              width={1200}
+                              height={800}
+                              className={`w-full h-auto ${isMobile ? '' : 'rounded-md'}`} // Added conditional rounded corners
+                              sizes="100vw"
+                              priority
+                            />
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
             )}
             
             {/* Image Gallery - Skip first image if it's the same as featured image */}
             {projectImages.length > 1 && (
               <div className={`${isMobile ? 'mb-0' : 'mb-8'}`}>
-                <div className={`flex flex-col ${isMobile ? 'space-y-0' : 'space-y-6'}`}>
-                  {projectImages.slice(1).map((image, index, array) => {
-                    // Use type assertion to tell TypeScript this might be a SanityImageWithCaption
-                    const imageWithCaption = image as SanityImageWithCaption;
-                    const imageKey = `img-${index + 1}`; // +1 because we've sliced off the first image
-                    const styles = getImageStyles(imageKey);
-                    const isLastImage = index === array.length - 1; // Check if this is the last image
-                    
-                    return (
-                      <div 
-                        key={index}
-                        className="relative cursor-pointer"
-                        onClick={() => {
-                          // Add 1 to index because we're skipping the first image
-                          setCurrentImageIndex(index + 1);
-                          setLightboxOpen(true);
-                        }}
-                      >
-                        {/* Dynamic aspect ratio based on image orientation - no mb-1 if it's the last image */}
-                        <div className={`relative ${styles.aspect} ${!isLastImage ? 'mb-1' : ''}`}>
-                          <Image
-                            src={urlForImage(image).url()}
-                            alt={imageWithCaption.caption || `${selectedProject?.title} image ${index + 2}`}
-                            width={1200}
-                            height={800}
-                            className="w-full h-auto"
-                            sizes="100vw"
-                            priority={index < 3} // Prioritize first few images
-                            loading={index < 3 ? "eager" : "lazy"}
-                          />
-                        </div>
-                        
-                        {/* Caption with padding only on desktop or if mobile */}
-                        {imageWithCaption.caption && (
-                          <p className={`text-sm text-muted-foreground mt-1 ${isMobile ? 'px-4 pb-2' : 'px-0 pb-0'}`}>
-                            {imageWithCaption.caption}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                {(() => {
+                  switch(galleryDisplay) {
+                    case 'grid': 
+                      return renderGrid();
+                    case 'carousel': 
+                      return renderCarousel();
+                    case 'masonry': 
+                      return renderMasonry();
+                    case 'stacked':
+                    default:
+                      return renderStacked();
+                  }
+                })()}
               </div>
             )}
             

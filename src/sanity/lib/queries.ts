@@ -191,3 +191,30 @@ export async function getHomePage() {
     seo
   }`);
 }
+
+// GROQ QUERIES
+
+export const projectsQuery = `
+  *[_type == "project"] {
+    _id,
+    title,
+    description,
+    slug,
+    featured,
+    featuredVideoEnabled,
+    featuredVideo{
+      title,
+      video{asset->{playbackId}}
+    },
+    "projectField": projectField->{ title, _ref },
+    "projectSector": projectSector->{ title, _ref },
+    "subCategories": subCategories[]->{ title, _ref },
+    featuredImage,
+    "gallery": gallery{
+      display,
+      zoom,
+      "images": images[]
+    },
+    clientInfo,
+  }
+`;
