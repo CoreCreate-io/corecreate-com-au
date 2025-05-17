@@ -1,5 +1,5 @@
 import { SanityImage } from "../types";
-import { urlForImage } from "@/lib/image";
+import { urlForImage } from "@/sanity/lib/image";
 
 // Centralized image orientation detection
 export function getImageOrientation(image: SanityImage): Promise<'portrait' | 'landscape' | 'square'> {
