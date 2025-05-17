@@ -227,38 +227,40 @@ div[role="dialog"] .cc-lightbox-container {
   touch-action: manipulation;
 }
 
+/* Simplified filter item styles */
 .filter-container {
   display: flex;
   flex-wrap: nowrap;
-  gap: 5px;
   padding-bottom: 4px;
 }
 
 .filter-item {
-  flex: 0 0 auto;
+  display: inline-block; 
   min-width: 80px;
-  width: auto;
-  margin-right: 0;
+  flex-shrink: 0; /* Prevent shrinking */
+  overflow: hidden; /* Ensure rounded corners work properly */
+  border-radius: 0.3rem; /* Ensure rounded corners */
 }
 
+/* Let the inner div expand based on content */
 .filter-item > div {
+  height: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: auto; /* Allow width to be determined by content */
-  min-height: 46px; /* Min height instead of fixed height */
-  height: auto; /* Let height adapt to content if needed */
+  position: relative;
+  transition: all 0.2s ease;
+  border-radius: 0.2rem; /* Explicitly set rounded corners */
+  overflow: hidden; /* Ensure image respects rounded corners */
 }
 
+/* Make text drive the container width */
 .filter-item h3 {
-  white-space: nowrap;
-  padding: 0 12px; /* Horizontal padding */
+  padding: 0 6px;
   text-align: center;
   font-size: 0.875rem;
-  line-height: 1.2;
 }
 
-/* Add to your ProjectsOverride.css */
 
 /* Fix Mux player interaction issues on desktop */
 mux-player {

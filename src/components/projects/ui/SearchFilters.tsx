@@ -9,14 +9,17 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Category } from "../types";
 import { urlForImage } from "@/sanity/lib/image";
 
-// Update your props interface
+// Import your CSS with the filter styles
+import "../components/css/ProjectsOverride.css";
+
+// Same props interface
 interface SearchFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   activeCategory: string;
   setActiveCategory: (category: string) => void;
-  categories: Category[]; // All categories
-  visibleCategories?: Category[]; // Non-empty categories
+  categories: Category[];
+  visibleCategories?: Category[];
   loading: boolean;
 }
 
@@ -26,28 +29,25 @@ export function SearchFilters({
   activeCategory,
   setActiveCategory,
   categories,
-  visibleCategories, // Use this new prop
+  visibleCategories,
   loading
 }: SearchFiltersProps) {
   const [showFilters, setShowFilters] = useState(true);
 
-  // Handle filter toggle
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
 
-  // Handle category click
   const handleCategoryClick = (categorySlug: string) => {
     console.log('Clicked category slug:', categorySlug);
     setActiveCategory(categorySlug || '');
   };
 
-  // Use visibleCategories if provided, otherwise fall back to categories
   const categoriesToShow = visibleCategories || categories;
 
   return (
-    <Container className="mb-10">
-      {/* Search Bar */}
+    <Container className="mb-1">
+      {/* Search Bar - stays constrained */}
       <div className="relative">
         <Input
           placeholder="Search our work"
@@ -74,7 +74,7 @@ export function SearchFilters({
         </div>
       </div>
       
-      {/* Category Filters */}
+      {/* Category Filters with edge-to-edge scrolling on mobile */}
       {showFilters && (
         <div className="mt-4 filter-grid-override">
           {loading ? (
@@ -85,58 +85,60 @@ export function SearchFilters({
               ))}
             </div>
           ) : (
-            
-            // Inside your categories.map function:
-            <ScrollArea className="w-full pb-2">
-              <div className="filter-container flex space-x-3">
-                {categoriesToShow
-                  .filter(category => 
-                    category.categoryType === 'creativeField' || 
-                    category.slug?.current === 'featured'
-                  )
-                  .map((category) => {
-                    const isActive = activeCategory === category.slug?.current;
-                    return (
-                      <div 
-                        key={category._id}
-                        className="filter-item relative overflow-hidden rounded-lg cursor-pointer 
-                          transition-all hover:shadow-lg"
-                        onClick={() => handleCategoryClick(category.slug?.current || '')}
-                      >
-                        {/* Content-based width container */}
-                        <div className="bg-gray-200 relative">
-                          {category.featuredImage ? (
-                            <Image
-                              src={urlForImage(category.featuredImage).url()}
-                              alt={category.title}
-                              fill
-                              sizes="(max-width: 768px) 150px, 200px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900" />
-                          )}
-                          
-                          {/* Dark overlay */}
-                          <div className={`absolute inset-0 transition-colors duration-200 ${
-                            isActive 
-                              ? 'bg-[#BAFF00]/80'
-                              : 'bg-black/70'
-                          }`}></div>
-                          
-                          {/* Category name - with content-based sizing */}
-                          <div className="flex items-center justify-center py-3 px-2 z-10">
-                            <h3 className={`font-medium text-xs px-6 py-2 z-2 ${isActive ? 'text-black' : 'text-white'}`}>
-                              {category.title}
-                            </h3>
+            // The key change is here - negative margins on mobile only
+            <div className="-mx-4 sm:-mx-6 md:mx-0">
+              <ScrollArea className="w-full pb-2">
+                {/* Add padding to inner content to match the negative margin */}
+                <div className="filter-container flex space-x-2 px-4 sm:px-6 md:px-0">
+                  {categoriesToShow
+                    .filter(category => 
+                      category.categoryType === 'creativeField' || 
+                      category.slug?.current === 'featured'
+                    )
+                    .map((category) => {
+                      const isActive = activeCategory === category.slug?.current;
+                      return (
+                        <div 
+                          key={category._id}
+                          className="filter-item rounded-lg cursor-pointer transition-all hover:shadow-lg overflow-hidden"
+                          onClick={() => handleCategoryClick(category.slug?.current || '')}
+                        >
+                          {/* Restructured for proper layering */}
+                          <div className="relative h-[60px] rounded-lg overflow-hidden">
+                            {/* 1. Background image layer */}
+                            {category.featuredImage && (
+                              <div className="absolute inset-0">
+                                <Image
+                                  src={urlForImage(category.featuredImage).url()}
+                                  alt=""
+                                  fill
+                                  sizes="(max-width: 768px) 150px, 200px"
+                                  className="object-cover"
+                                />
+                              </div>
+                            )}
+                            
+                            {/* 2. Dark overlay layer - separate from image */}
+                            <div 
+                              className={`absolute inset-0 ${
+                                isActive ? 'bg-[#BAFF00]/80' : 'bg-black/50'
+                              }`}
+                            ></div>
+                            
+                            {/* 3. Content layer */}
+                            <div className="relative h-full flex items-center justify-center px-4 z-10">
+                              <h3 className={`font-medium text-xs whitespace-nowrap ${isActive ? 'text-black' : 'text-white'}`}>
+                                {category.title}
+                              </h3>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-              </div>
-              <ScrollBar orientation="horizontal" className="lg:hidden" />
-            </ScrollArea>
+                      );
+                    })}
+                </div>
+                <ScrollBar orientation="horizontal" className="lg:hidden" />
+              </ScrollArea>
+            </div>
           )}
         </div>
       )}
