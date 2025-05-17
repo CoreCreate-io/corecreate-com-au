@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { urlForImage } from "@/sanity/lib/image";
 import { Project, SanityImage, SanityImageWithCaption } from "../types";
-import "../ProjectsOverride.css";
+import "../components/css/ProjectsOverride.css";
 
 interface ImageLightboxProps {
   selectedProject: Project | null;

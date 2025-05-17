@@ -1,5 +1,5 @@
 import { getProjects, getCategories } from "@/sanity/lib/queries";
-import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
+import { ProjectsGrid } from "@/components/projects/components/ProjectsGrid";
 import { Container } from "@/components/layout/container";
 import { Metadata } from 'next';
 

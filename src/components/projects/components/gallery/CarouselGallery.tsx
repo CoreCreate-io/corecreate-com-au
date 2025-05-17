@@ -99,6 +99,25 @@ export function CarouselGallery({
           </>
         )}
       </Carousel>
+      
+      {/* Custom pagination dots */}
+      {images.length > 1 && (
+        <div className="flex justify-center mt-4 gap-1.5">
+          {images.map((_, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              size="sm"
+              className={`h-2 min-w-0 p-0 rounded-full transition-all ${
+                selectedIndex === index 
+                  ? 'w-6 bg-primary' 
+                  : 'w-2 bg-muted-foreground/30'
+              }`}
+              onClick={() => scrollTo(index)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

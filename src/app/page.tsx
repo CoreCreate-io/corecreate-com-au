@@ -1,7 +1,7 @@
-import { ProjectsGrid } from "@/components/projects/ProjectsGrid";
+import { ProjectsGrid } from "@/components/projects/components/ProjectsGrid";
 import { Container } from "@/components/layout/container";
 import { getProjects, getCategories, getHomePage } from "@/sanity/lib/queries";
-import FeatureVideo from "@/components/FeatureVideo";
+import FeatureVideo from "@/components/common/FeatureVideo";
 import { FormattedText } from "@/components/ui/FormattedText";
 
 export const dynamic = 'force-static';
